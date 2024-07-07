@@ -25,4 +25,3 @@ The `compress` command will make the file `filename.compress` and `filename.comp
 - Support for multiple files.
 - Test script
 - compressing folders
-- 

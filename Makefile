@@ -1,4 +1,4 @@
-CXXFLAGS = -std=c++2a -Wall -Wextra -pedantic -g #-O3
+CXXFLAGS = -std=c++2a -Wall -Wextra -pedantic -g -O3
 CXX = clang++
 
 TARGETS = compress uncompress
