@@ -1,0 +1,2 @@
+Step 1: Divide the number by 2 and find the remainder,`
+ then store the remainder in an array. Step 2: Divide the number by 2. Step 3: Repeat the above two steps 
