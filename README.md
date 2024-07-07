@@ -6,15 +6,19 @@ A C++ Implementation of the Huffman Compression algorithm.
 
 ### Compress:
 
-`./compress <filename>`
+`./compress <filename1> <filename2> ...`
 
 ### Uncompress:
 
-`./uncompress <filename>`
+`./uncompress <filename1> <filename2> ...`
+
+### Test Script: 
+
+`sh test-script.sh`
 
 ### Clear compressed files, codes and uncompressed files:
 
-`make clearcomp`
+`sh clearCompress.sh`
 
 ### Notes: 
 
@@ -22,6 +26,4 @@ The `compress` command will make the file `filename.compress` and `filename.comp
 
 ### Roadmap: 
 
-- Support for multiple files.
-- Test script
 - compressing folders
