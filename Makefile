@@ -1,4 +1,4 @@
-CXXFLAGS = -std=c++2a -Wall -Wextra -pedantic -g -O3
+CXXFLAGS = -std=c++2b -Wall -Wextra -pedantic -g #-O3
 CXX = clang++
 
 TARGETS = compress uncompress
@@ -28,9 +28,3 @@ encoder.o: encoder.cpp encoder.hpp huffmanNode.cpp
 
 clean:
 	rm -rf *.o $(TARGETS)
-
-cleancomp:
-	rm *.compress.codes
-	rm *.compress
-	rm *.uncompress
-	

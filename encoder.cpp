@@ -138,7 +138,7 @@ void Encoder::Encode(){
     writeToFile(codes);
     writeCodes(codes);
 
-    cout << "Unique Characters: " << codes.size() << endl;
+    cout << "Unique Characters in " << filename_ << ": " << codes.size() << endl;
     cout << "Original File Size: " << fileLen_ << " bytes" << endl;
     cout << "Compressed File Size: " << compFileLen_ << " bytes" << endl;
     cout << "Compression Ratio: " << double(compFileLen_) / fileLen_ << endl;

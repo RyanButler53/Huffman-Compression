@@ -6,12 +6,15 @@
 using namespace std;
 
 int main(int argc, const char** argv){
-    string filename = "small.txt";
-    if (argc > 1){
-        filename = argv[1];
+    if (argc == 1){
+        cerr << "No files given" << endl;
+        exit(1);
     }
-    Encoder e{filename};
-    e.Encode();
 
+    for (int i = 1; i < argc; ++i){
+        string filename = argv[i];
+        Encoder e{filename};
+        e.Encode();
+    }
     return 0;
 }

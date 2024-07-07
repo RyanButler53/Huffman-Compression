@@ -5,10 +5,15 @@
 using namespace std;
 
 int main(int argc, const char** argv){
-    std::string filename = "small.txt";
-    if (argc > 1){
-        filename = argv[1];
+    if (argc == 1){
+        cerr << "No files given" << endl;
+        exit(1);
     }
-    Decoder d{filename};
-    d.Decode();
+
+    for (int i = 1; i < argc; ++i) {
+        string filename = argv[i];
+        Decoder d{filename};
+        d.Decode();
+    }
+    return 0;
 }
