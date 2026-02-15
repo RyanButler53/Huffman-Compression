@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-set(metal_ROOT "/users/ryan/projects/sw/metal-cpp")
 
 option(HC_DO_TESTS "build unit tests" ON)
 option(HC_WITH_GPU "build with metal support" ON)
