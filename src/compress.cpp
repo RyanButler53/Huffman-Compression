@@ -1,4 +1,3 @@
-#include "huffmanNode.hpp"
 #include "encoder.hpp"
 #include <iostream>
 #include <fstream>
@@ -16,5 +15,6 @@ int main(int argc, const char** argv){
         Encoder e{filename};
         e.Encode();
     }
+
     return 0;
 }

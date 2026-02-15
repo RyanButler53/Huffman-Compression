@@ -2,7 +2,10 @@ A C++ Implementation of the Huffman Compression algorithm.
 
 ### Build: 
 
-`make`
+`mkdir build`
+`cd build`
+`cmake ..`
+`cmake --build . --parallel`
 
 ### Compress:
 
@@ -12,9 +15,10 @@ A C++ Implementation of the Huffman Compression algorithm.
 
 `./uncompress <filename1> <filename2> ...`
 
-### Test Script: 
+### Tests: 
 
-`sh test-script.sh`
+Building tests requires gtest and openssl. Gtest is downloaded automatically through fetchContent and openssl is found via cmake find package. 
+To turn off tests , use `-DHC_DO_TESTS=OFF` in the cmake configuration. 
 
 ### Clear compressed files, codes and uncompressed files:
 
