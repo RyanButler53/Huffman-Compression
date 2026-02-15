@@ -12,8 +12,8 @@
 
 using namespace std;
 
-Encoder::Encoder(std::string file):
-filename_{file}, huffmanTree_{nullptr}, fileLen_{0}, compFileLen_{0}
+Encoder::Encoder(std::string file, execution::space space):
+filename_{file}, huffmanTree_{nullptr}, fileLen_{0}, compFileLen_{0}, space_{space}
 {
     // Read in from file, build a huffman tree of frequencies. 
     fstream input{filename_};
@@ -106,9 +106,9 @@ void Encoder::getCompressedString(std::string& compressedString, std::array<std:
     }
 }
 
-void Encoder::getCompressedBytes(execution::space space, std::vector<unsigned char>& compressedChars, std::string& compressedString){
+void Encoder::getCompressedBytes(std::vector<unsigned char>& compressedChars, std::string& compressedString){
 
-    if (space == execution::space::cpu){
+    if (space_ == execution::space::cpu){
         compressedChars.reserve(compressedString.size() / 8);
 
         string::iterator it = begin(compressedString);
@@ -160,7 +160,7 @@ void Encoder::writeToFile(std::array<std::string, 256>& codes){
     
     // turn into bytes.
     vector<unsigned char> compressedChars;
-    getCompressedBytes(execution::space::gpu, compressedChars, compressedString);
+    getCompressedBytes(compressedChars, compressedString);
     compFileLen_ = compressedChars.size();
 
     writeToFile(compressedChars);

@@ -12,7 +12,7 @@
 
 
 namespace execution{
-  enum class space {cpu = 0, gpu = 1};
+  enum class space : uint8_t {cpu = 0, gpu = 1};
 }
 class Encoder
 {
@@ -21,6 +21,8 @@ class Encoder
     HuffmanNode* huffmanTree_;
     size_t fileLen_;
     size_t compFileLen_;
+    execution::space space_;
+
 
     void destructorHelper(HuffmanNode *&node);
     void codesHelper(const std::string &currentCode, HuffmanNode* curNode, std::array<std::string, 256>& codes);
@@ -28,14 +30,14 @@ class Encoder
     std::array<std::string, 256> getCodes();
 
     void getCompressedString(std::string& compressedString, std::array<std::string, 256>& codes);
-    void getCompressedBytes(execution::space space, std::vector<unsigned char>& compressedChars, std::string& compressedString);
+    void getCompressedBytes(std::vector<unsigned char>& compressedChars, std::string& compressedString);
     void writeToFile(std::vector<unsigned char>& compressedChars);
   
     void writeToFile(std::array<std::string, 256>& codes);
     void writeCodes(std::array<std::string, 256>& codes);
 
   public:
-    Encoder(std::string file);
+    Encoder(std::string file, execution::space space = execution::space::cpu);
     ~Encoder();
 
     void Encode();
