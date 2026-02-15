@@ -87,41 +87,37 @@ void Encoder::writeToFile(unordered_map<char, string>& codes){
     string compressedString;
     fstream input{filename_};
     char c;
-    if (input.is_open()) {
-        while (input >> noskipws >> c){
-            string prefixCode = codes[c];
-            compressedString.append(prefixCode);
-        }
-        while (compressedString.length() %8 != 0){
-            compressedString.append("1");
-        }
-        
-        // turn into bytes.
-        vector<unsigned char> compressedChars;
-        string::iterator it = begin(compressedString);
-        while(it != end(compressedString)){
-            char ch = 0;
-            for (size_t i = 0; i < 8; ++i){
-                ch <<= 1;
-                if (*it == '1'){
-                    ++ch;
-                }
-                ++it;
-            }
-            compressedChars.push_back(ch);
-        }
-        compFileLen_ = compressedChars.size();
-        // Print to file
-        ofstream out{filename_ + ".compress"};
-        for (unsigned char& c : compressedChars){
-            out << c;
-        }
-    }
-    else
-    {
+    if (!input.is_open()){
         cerr << "Unable to read file" << endl;
-        exit(1);
+        return;
     }
+    
+    while (input >> noskipws >> c){
+        string prefixCode = codes[c];
+        compressedString.append(prefixCode);
+    }
+    while (compressedString.length() %8 != 0){
+        compressedString.append("1");
+    }
+    
+    // turn into bytes.
+    vector<unsigned char> compressedChars;
+    string::iterator it = begin(compressedString);
+    while(it != end(compressedString)){
+        char ch = 0;
+        for (size_t i = 0; i < 8; ++i){
+            ch = (ch << 1) | (*it == 1);
+            ++it;
+        }
+        compressedChars.push_back(ch);
+    }
+    compFileLen_ = compressedChars.size();
+    // Print to file
+    ofstream out{filename_ + ".compress"};
+    for (unsigned char& c : compressedChars){
+        out << c;
+    }
+
 }
 
 void Encoder::writeCodes(unordered_map<char, string> &codes){
