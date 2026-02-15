@@ -82,9 +82,7 @@ std::unordered_map<char, string> Encoder::getCodes(){
     return codes;
 }
 
-void Encoder::writeToFile(unordered_map<char, string>& codes){
-    // Have to read in the REAL FILE DATA
-    string compressedString;
+void Encoder::getCompressedString(std::string& compressedString, unordered_map<char, string>& codes ){
     fstream input{filename_};
     char c;
     if (!input.is_open()){
@@ -93,15 +91,18 @@ void Encoder::writeToFile(unordered_map<char, string>& codes){
     }
     
     while (input >> noskipws >> c){
-        string prefixCode = codes[c];
-        compressedString.append(prefixCode);
+        compressedString.append(codes[c]);
     }
-    while (compressedString.length() %8 != 0){
+
+    // Pad the rest of the values with ones. 
+    while (compressedString.length() % 8 != 0){
         compressedString.append("1");
     }
-    
-    // turn into bytes.
-    vector<unsigned char> compressedChars;
+}
+
+void Encoder::getCompressedBytes(std::vector<unsigned char>& compressedChars, std::string& compressedString){
+    compressedChars.reserve(compressedString.size() / 8);
+
     string::iterator it = begin(compressedString);
     while(it != end(compressedString)){
         char ch = 0;
@@ -111,13 +112,27 @@ void Encoder::writeToFile(unordered_map<char, string>& codes){
         }
         compressedChars.push_back(ch);
     }
-    compFileLen_ = compressedChars.size();
+}
+
+void Encoder::writeToFile(std::vector<unsigned char>& compressedChars){
     // Print to file
     ofstream out{filename_ + ".compress"};
     for (unsigned char& c : compressedChars){
         out << c;
     }
+}
 
+void Encoder::writeToFile(unordered_map<char, string>& codes){
+    // Have to read in the REAL FILE DATA
+    string compressedString;
+    getCompressedString(compressedString, codes);
+    
+    // turn into bytes.
+    vector<unsigned char> compressedChars;
+    getCompressedBytes(compressedChars, compressedString);
+    compFileLen_ = compressedChars.size();
+
+    writeToFile(compressedChars);
 }
 
 void Encoder::writeCodes(unordered_map<char, string> &codes){
