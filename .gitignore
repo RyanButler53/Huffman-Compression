@@ -4,3 +4,5 @@ compress
 uncompress
 
 settings.json
+build
+.vscode
