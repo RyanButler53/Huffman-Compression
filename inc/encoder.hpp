@@ -5,6 +5,15 @@
 #include <string>
 #include <unordered_map>
 
+#ifdef HC_WITH_GPU
+#include <Foundation/Foundation.hpp>
+#include <Metal/Metal.hpp>
+#endif
+
+
+namespace execution{
+  enum class space {cpu = 0, gpu = 1};
+}
 class Encoder
 {
   private:
@@ -19,7 +28,7 @@ class Encoder
     std::array<std::string, 256> getCodes();
 
     void getCompressedString(std::string& compressedString, std::array<std::string, 256>& codes);
-    void getCompressedBytes(std::vector<unsigned char>& compressedChars, std::string& compressedString);
+    void getCompressedBytes(execution::space space, std::vector<unsigned char>& compressedChars, std::string& compressedString);
     void writeToFile(std::vector<unsigned char>& compressedChars);
   
     void writeToFile(std::array<std::string, 256>& codes);

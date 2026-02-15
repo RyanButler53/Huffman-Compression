@@ -12,6 +12,10 @@ include(GoogleTest)
 find_package(OpenSSL REQUIRED)
 
 add_executable(equivalence equivalent.cpp)
-message(STATUS "Current source: ${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(equivalence PRIVATE gtest gtest_main encode decode OpenSSL::Crypto)
+target_link_libraries(equivalence PRIVATE gtest gtest_main 
+        encode 
+        decode
+        OpenSSL::Crypto
+        )
 target_compile_definitions(equivalence PUBLIC TEST_FILE_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\")
+target_compile_definitions(equivalence PUBLIC $<IF:$<BOOL:${HC_WITH_GPU}>,"HC_WITH_GPU","">)
