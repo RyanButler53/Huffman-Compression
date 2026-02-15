@@ -132,14 +132,15 @@ void Encoder::getCompressedBytes(execution::space space, std::vector<unsigned ch
         MTL::Buffer* d_compString = d->newBuffer(nbytes, MTL::ResourceStorageModeShared);
         MTL::Buffer* d_compBytes = d->newBuffer(nbytes / 8, MTL::ResourceStorageModeShared);
         std::copy(compressedString.begin(), compressedString.end(), (char*)d_compString->contents());
-        
+
         MetalEncoder encoder(d, nbytes);
 
         encoder.compress(d_compString, d_compBytes);
-        std::copy((char*)d_compBytes, (char*)d_compBytes + d_compBytes->length(), compressedChars.begin());
+        std::copy((char*)d_compBytes->contents(), (char*)d_compBytes->contents() + d_compBytes->length(), compressedChars.begin());
         d->release();
+     #else
+        throw std::logic_error("Compression not compiled with GPU support");
      #endif
-     throw std::logic_error("Compression not compiled with GPU support");
     }
 
 }
