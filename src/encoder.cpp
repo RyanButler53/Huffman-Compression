@@ -3,6 +3,8 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
+#include <ranges>
 
 using namespace std;
 
@@ -11,16 +13,13 @@ filename_{file}, huffmanTree_{nullptr}, fileLen_{0}, compFileLen_{0}
 {
     // Read in from file, build a huffman tree of frequencies. 
     fstream input{filename_};
-    std::unordered_map<char, unsigned long> counts;
-    char c;
+    std::array<unsigned long, 256> counts;
+    std::ranges::fill(counts, 0);
+    unsigned char c;
     fileLen_ = 0;
     if (input.is_open()) {
         while (input >> noskipws >> c){
-            if (counts.find(c) != counts.end()){
-                ++counts[c];
-            } else {
-                counts[c] = 1;
-            }
+            ++counts[c];
             ++fileLen_;
         }
     } else {
@@ -47,9 +46,9 @@ void Encoder::destructorHelper(HuffmanNode *&node){
     }
 }
 
-void Encoder::codesHelper(const string& currentCode, HuffmanNode* curNode, unordered_map<char, std::string>& codes){
+void Encoder::codesHelper(const string& currentCode, HuffmanNode* curNode, std::array<std::string, 256>& codes){
     if (curNode->isLeaf()){
-        char symbol = curNode->symbol_;
+        unsigned char symbol = curNode->symbol_;
         codes[symbol] = currentCode;
     } else {
         codesHelper(currentCode + "0", curNode->left_, codes);
@@ -57,12 +56,14 @@ void Encoder::codesHelper(const string& currentCode, HuffmanNode* curNode, unord
     }
 }
 
-void Encoder::buildFromFreq(std::unordered_map<char, unsigned long> freqs){
+void Encoder::buildFromFreq(std::array<unsigned long, 256> freqs){
     priority_queue<HuffmanNode*, std::vector<HuffmanNode*>, HuffmanPtrCompare> q;
     size_t n = freqs.size() - 1; // number of internal nodes
-    for (auto &[c, freq] : freqs) {
+    for (size_t c = 0; c < 256; ++c){
+        unsigned long freq = freqs[c];
         q.push(new HuffmanNode(c, freq));
     }
+
     // Build the huffman Tree.
     for (size_t i = 0; i < n; ++i){
         HuffmanNode* left = q.top();
@@ -76,15 +77,16 @@ void Encoder::buildFromFreq(std::unordered_map<char, unsigned long> freqs){
     return;
 }
 
-std::unordered_map<char, string> Encoder::getCodes(){
-    std::unordered_map<char, string> codes;
+std::array<std::string, 256> Encoder::getCodes(){
+    std::array<std::string, 256> codes;
+    std::ranges::fill(codes, "");
     codesHelper("", huffmanTree_, codes);
     return codes;
 }
 
-void Encoder::getCompressedString(std::string& compressedString, unordered_map<char, string>& codes ){
+void Encoder::getCompressedString(std::string& compressedString, std::array<std::string, 256>& codes ){
     fstream input{filename_};
-    char c;
+    unsigned char c;
     if (!input.is_open()){
         cerr << "Unable to read file" << endl;
         return;
@@ -105,7 +107,7 @@ void Encoder::getCompressedBytes(std::vector<unsigned char>& compressedChars, st
 
     string::iterator it = begin(compressedString);
     while(it != end(compressedString)){
-        char ch = 0;
+        unsigned char ch = 0;
         for (size_t i = 0; i < 8; ++i){
             ch = (ch << 1) | (*it == 1);
             ++it;
@@ -122,7 +124,7 @@ void Encoder::writeToFile(std::vector<unsigned char>& compressedChars){
     }
 }
 
-void Encoder::writeToFile(unordered_map<char, string>& codes){
+void Encoder::writeToFile(std::array<std::string, 256>& codes){
     // Have to read in the REAL FILE DATA
     string compressedString;
     getCompressedString(compressedString, codes);
@@ -135,21 +137,22 @@ void Encoder::writeToFile(unordered_map<char, string>& codes){
     writeToFile(compressedChars);
 }
 
-void Encoder::writeCodes(unordered_map<char, string> &codes){
+void Encoder::writeCodes(std::array<std::string, 256> &codes){
     ofstream out{filename_ + ".compress.codes"};
     out << codes.size() << endl;
     out << fileLen_ << endl;
-    for (auto& [c, code]:codes){
-        out << int(c) << " " << code << endl;
+    for (size_t i = 0; i < 256; ++i){
+        if (codes[i] != ""){
+            out << i << " " << codes[i] << endl;
+        }
     }
 }
 
 void Encoder::Encode(){
-    unordered_map<char, string> codes = getCodes();
+    std::array<std::string, 256>codes = getCodes();
     writeToFile(codes);
     writeCodes(codes);
 
-    cout << "Unique Characters in " << filename_ << ": " << codes.size() << endl;
     cout << "Original File Size: " << fileLen_ << " bytes" << endl;
     cout << "Compressed File Size: " << compFileLen_ << " bytes" << endl;
     cout << "Compression Ratio: " << double(compFileLen_) / fileLen_ << endl;
