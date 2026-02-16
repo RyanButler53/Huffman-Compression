@@ -36,18 +36,18 @@ class EncodeDecodeEquivalence : public ::testing::Test {
     }
 
     // filename, expected file len, expected compressed file len, expected compression ratio
-    void testFile(std::string fname, size_t filelen, size_t compSize){
+    void testFile(std::string fname, size_t filelen, size_t compSize, execution::space space){
         std::filesystem::path file = dataDir_ / fname;
         
-        Encoder e(file);
-        e.Encode();
+        auto e = Encoder::make(space, file);
+        e->Encode();
         Decoder d(file);
         d.Decode();
     
         std::string originalHash = hashFile(file);
         std::string compressed = hashFile(dataDir_ / (fname + ".uncompress"));
     
-        auto [length, complength, _] = e.getStats();
+        auto [length, complength, _] = e->getStats();
         ASSERT_EQ(originalHash, compressed);
         EXPECT_EQ(filelen, length);
         EXPECT_EQ(compSize, complength);
@@ -95,14 +95,42 @@ class EncodeDecodeEquivalence : public ::testing::Test {
 
 };
 
-TEST_F(EncodeDecodeEquivalence, smaller){
-    testFile("smaller.txt", 62, 31);
+TEST_F(EncodeDecodeEquivalence, smallerCpu){
+    testFile("smaller.txt", 62, 31, execution::space::cpu);
 }
 
-TEST_F(EncodeDecodeEquivalence, small){
-    testFile("small.txt", 162, 86);
+TEST_F(EncodeDecodeEquivalence, smallCpu){
+    testFile("small.txt", 162, 86, execution::space::cpu);
 }
 
-TEST_F(EncodeDecodeEquivalence, huffman){
-    testFile("huffman.txt", 19388, 11299);
+TEST_F(EncodeDecodeEquivalence, huffmanCpu){
+    testFile("huffman.txt", 19388, 11299, execution::space::cpu);
 }
+
+// Async 
+
+TEST_F(EncodeDecodeEquivalence, smallerAsync){
+    testFile("smaller.txt", 62, 31, execution::space::async);
+}
+
+TEST_F(EncodeDecodeEquivalence, smallAsync){
+    testFile("small.txt", 162, 86, execution::space::async);
+}
+
+TEST_F(EncodeDecodeEquivalence, huffmanAsync){
+    testFile("huffman.txt", 19388, 11299, execution::space::async);
+}
+
+#ifdef HC_WITH_GPU
+TEST_F(EncodeDecodeEquivalence, smallerGPU){
+    testFile("smaller.txt", 62, 31, execution::space::gpu);
+}
+
+TEST_F(EncodeDecodeEquivalence, smallGPU){
+    testFile("small.txt", 162, 86, execution::space::gpu);
+}
+
+TEST_F(EncodeDecodeEquivalence, huffmanGPU){
+    testFile("huffman.txt", 19388, 11299, execution::space::gpu);
+}
+#endif
