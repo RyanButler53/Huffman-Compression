@@ -5,7 +5,9 @@
 #include <Foundation/Foundation.hpp>
 #include <Metal/Metal.hpp>
 
-class MetalEncoder
+#include "encoder.hpp"
+
+class GpuManager
 {
     MTL::Device* device_;
     MTL::ComputePipelineState* pipeline_;
@@ -14,13 +16,21 @@ class MetalEncoder
     size_t stringLen_; // length of the string as string characters, not bytes;
 
     void encodeCommand(MTL::ComputeCommandEncoder *computeEncoder, MTL::Buffer* compressedString, MTL::Buffer* compressedBytes);
-
-
-public:
-    MetalEncoder(MTL::Device* device, size_t stringLength);
-    ~MetalEncoder();
+    
+    public:
+    GpuManager(MTL::Device* device, size_t stringLength);
+    ~GpuManager();
 
     void compress(MTL::Buffer* compressedString, MTL::Buffer* compressedBytes);
+};
+
+class MetalEncoder : public Encoder {
+    
+    void getCompressedBytes(std::vector<unsigned char>& compressedChars, std::string& compressedString) override;
+
+    public: 
+    using Encoder::Encoder;
+
 };
 
 #endif

@@ -1,19 +1,15 @@
-#include "AsyncEncoder.hpp"
+#include "asyncEncoder.hpp"
 
 #include <fstream>
 #include <thread>
 #include <future>
 
-AsyncEncoder::AsyncEncoder(const std::array<std::string, 256>& codes, std::string filename):
-    codes_{codes}, filename_{filename}{}
-
-size_t AsyncEncoder::readThread(){
+void AsyncEncoder::readThread(std::array<std::string, 256>& codes){
     std::fstream input{filename_, std::ios::in};
     unsigned char c;
     if (!input.is_open()){
         std::cerr << "Unable to read file" << std::endl;
         compressQueue_.push({"", true});
-        return 0;
     }
     // read into 1 MB chunks
     const size_t chunkSize = 1024 * 1024;
@@ -26,7 +22,7 @@ size_t AsyncEncoder::readThread(){
 
         for (size_t i = 0; i < dataread; ++i){
             unsigned char c = filechunk[i];
-            compressedString.append(codes_[c]);
+            compressedString.append(codes[c]);
         }
         if (dataread < chunkSize){ // last one
             // Pad the rest of the values with ones. 
@@ -42,10 +38,9 @@ size_t AsyncEncoder::readThread(){
             compressQueue_.push({compressedString, false});
         }
     }
-    return std::filesystem::file_size(filename_);
 }
 
-size_t AsyncEncoder::compressThread(){
+void AsyncEncoder::compressThread(){
     bool last = false;
     size_t compressedFileLen = 0;
     while (!last){
@@ -69,7 +64,6 @@ size_t AsyncEncoder::compressThread(){
         writeQueue_.push({compressedChars, last});
         compressedFileLen += compressedChars.size();
    }
-   return compressedFileLen;
 }
 
 void AsyncEncoder::writeThread(){
@@ -83,13 +77,13 @@ void AsyncEncoder::writeThread(){
     }
 }
 
-std::pair<size_t, size_t> AsyncEncoder::launch(){
-    std::future<size_t> fileLenFuture = std::async([this](){return readThread();});
-    std::future<size_t> compLenFuture = std::async([this](){return compressThread();});
-    std::thread write = std::thread([this](){writeThread();});
 
-    size_t filelen = fileLenFuture.get();
-    size_t compfilelen = compLenFuture.get();
+void AsyncEncoder::writeToFile(std::array<std::string, 256>& codes){
+    std::thread read([this, &codes](){return readThread(codes);});
+    std::thread compress([this](){return compressThread();});
+    std::thread write([this](){writeThread();});
+
+    read.join();
+    compress.join();
     write.join();
-    return std::make_pair(filelen, compfilelen);
 }

@@ -12,8 +12,9 @@ option(HC_DO_TESTS "build unit tests" ON)
 option(HC_WITH_GPU "build with metal support" ON)
 
 add_subdirectory(src)
-
+set (metal_ROOT /users/ryan/projects/sw/metal-cpp)
 if (HC_WITH_GPU)
+    message(STATUS "Enabling GPU support via Metal")
     add_subdirectory(kernels)
     find_package(Metal)
 endif()

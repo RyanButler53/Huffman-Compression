@@ -15,19 +15,17 @@
 
 using namespace std;
 
-Encoder::Encoder(std::string file, execution::space space):
-filename_{file}, huffmanTree_{nullptr}, fileLen_{0}, compFileLen_{0}, space_{space}
+Encoder::Encoder(std::string file):
+filename_{file}, huffmanTree_{nullptr}
 {
     // Read in from file, build a huffman tree of frequencies. 
     fstream input{filename_};
     std::array<unsigned long, 256> counts;
     std::ranges::fill(counts, 0);
     unsigned char c;
-    fileLen_ = 0;
     if (input.is_open()) {
         while (input >> noskipws >> c){
             ++counts[c];
-            ++fileLen_;
         }
     } else {
         cerr << "Couldn't open file" << endl;
@@ -39,6 +37,22 @@ filename_{file}, huffmanTree_{nullptr}, fileLen_{0}, compFileLen_{0}, space_{spa
 Encoder::~Encoder()
 {
     destructorHelper(huffmanTree_);
+}
+
+std::unique_ptr<Encoder> Encoder::make(execution::space space, std::string filename){
+    switch (space)
+    {
+    case execution::space::cpu:
+        return std::make_unique<Encoder>(filename);
+    case execution::space::async:
+        return std::make_unique<AsyncEncoder>(filename);
+    case execution::space::gpu:
+        #ifdef HC_WITH_GPU
+        return std::make_unique<MetalEncoder>(filename);
+        #endif    
+    default:
+        throw std::invalid_argument("Invalid Encoder");
+    }
 }
 
 void Encoder::destructorHelper(HuffmanNode *&node){
@@ -112,41 +126,18 @@ void Encoder::getCompressedString(std::string& compressedString, std::array<std:
 
 void Encoder::getCompressedBytes(std::vector<unsigned char>& compressedChars, std::string& compressedString){
 
-    if (space_ == execution::space::cpu){
-        compressedChars.reserve(compressedString.size() / 8);
+    compressedChars.reserve(compressedString.size() / 8);
 
-        string::iterator it = begin(compressedString);
-        while(it != end(compressedString)){
-            unsigned char ch = 0;
-            for (size_t i = 0; i < 8; ++i){
-                ch = (ch << 1) | (*it == 49); // 49 is ascii for "1"
-                ++it;
-            }
-            compressedChars.push_back(ch);
+    string::iterator it = begin(compressedString);
+    while(it != end(compressedString)){
+        unsigned char ch = 0;
+        for (size_t i = 0; i < 8; ++i){
+            ch = (ch << 1) | (*it == 49); // 49 is ascii for "1"
+            ++it;
         }
-        return;
-    } else { // gpu
-     #ifdef HC_WITH_GPU
-        compressedChars.resize(compressedString.size() / 8);
-
-        MTL::Device* d = MTL::CreateSystemDefaultDevice();
-        size_t nbytes = compressedString.size();
-        
-        // not technically device memory...
-        MTL::Buffer* d_compString = d->newBuffer(nbytes, MTL::ResourceStorageModeShared);
-        MTL::Buffer* d_compBytes = d->newBuffer(nbytes / 8, MTL::ResourceStorageModeShared);
-        std::copy(compressedString.begin(), compressedString.end(), (char*)d_compString->contents());
-
-        MetalEncoder encoder(d, nbytes);
-
-        encoder.compress(d_compString, d_compBytes);
-        std::copy((char*)d_compBytes->contents(), (char*)d_compBytes->contents() + d_compBytes->length(), compressedChars.begin());
-        d->release();
-     #else
-        throw std::logic_error("Compression not compiled with GPU support");
-     #endif
+        compressedChars.push_back(ch);
     }
-
+    return;
 }
 
 void Encoder::writeToFile(std::vector<unsigned char>& compressedChars){
@@ -165,25 +156,17 @@ void Encoder::writeToFile(std::array<std::string, 256>& codes){
     // turn into bytes.
     vector<unsigned char> compressedChars;
     getCompressedBytes(compressedChars, compressedString);
-    compFileLen_ = compressedChars.size();
 
     writeToFile(compressedChars);
 }
 
 
-void Encoder::writeToFileAsync(const std::array<std::string, 256>& codes){
-
-    AsyncEncoder asyncManager(codes, filename_);
-    auto [fileSize, compressedSize] = asyncManager.launch();
-    fileLen_ = fileSize;
-    compFileLen_ = compressedSize;
-}
-
 void Encoder::writeCodes(std::array<std::string, 256> &codes){
     ofstream out{filename_ + ".compress.codes"};
     std::cout << std::ranges::count_if(codes, [](std::string s){return !s.empty();}) << std::endl;
     out << std::ranges::count_if(codes, [](std::string s){return !s.empty();}) << endl;
-    out << fileLen_ << endl;
+
+    out << std::filesystem::file_size(filename_ + ".compress") << endl;
     for (size_t i = 0; i < 256; ++i){
         if (codes[i] != ""){
             out << i << " " << codes[i] << endl;
@@ -192,18 +175,20 @@ void Encoder::writeCodes(std::array<std::string, 256> &codes){
 }
 
 void Encoder::Encode(){
-    std::array<std::string, 256>codes = getCodes();
+    std::array<std::string, 256> codes = getCodes();
+    writeToFile(codes);
     writeCodes(codes);
 
-
-    // writeToFileAsync(codes);
-    writeToFile(codes);
+    size_t filelen = std::filesystem::file_size(filename_);
+    size_t compSize = std::filesystem::file_size(filename_ + ".compress");
     std::cout << "Unique Characters: " << std::ranges::count_if(codes, [](std::string s){return !s.empty();}) << std::endl;
-    cout << "Original File Size: " << fileLen_ << " bytes" << endl;
-    cout << "Compressed File Size: " << compFileLen_ << " bytes" << endl;
-    cout << "Compression Ratio: " << double(compFileLen_) / fileLen_ << endl;
+    cout << "Original File Size: " << filelen << " bytes" << endl;
+    cout << "Compressed File Size: " << compSize << " bytes" << endl;
+    cout << "Compression Ratio: " << double(compSize) / filelen << endl;
 }
 
     std::tuple<size_t, size_t, double> Encoder::getStats() const{
-        return {fileLen_, compFileLen_, double(compFileLen_) / fileLen_};
+        size_t filelen = std::filesystem::file_size(filename_);
+        size_t compSize = std::filesystem::file_size(filename_ + ".compress");
+        return {filelen, compSize, double(compSize) / filelen};
     }

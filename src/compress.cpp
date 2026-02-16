@@ -29,13 +29,15 @@ int main(int argc, const char** argv){
         space = execution::space::gpu;
         #endif
         ++arg_i;
+    } else if (firstArg == "async"){
+        space = execution::space::async;
+        ++arg_i;
     }
     for (; arg_i < argc; ++arg_i){
         auto now = std::chrono::steady_clock::now();
         string filename = argv[arg_i];
-
-        Encoder e{filename, space};
-        e.Encode();
+        std::unique_ptr<Encoder> e = Encoder::make(space, filename);
+        e->Encode();
         auto done = std::chrono::steady_clock::now();
 
         long ms = std::chrono::duration_cast<std::chrono::milliseconds>((done - now)).count();
