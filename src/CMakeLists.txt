@@ -1,7 +1,7 @@
 add_library(node STATIC huffmanNode.cpp)
 target_include_directories(node PUBLIC ${CMAKE_SOURCE_DIR}/inc)
 
-add_library(encode STATIC encoder.cpp)
+add_library(encode STATIC encoder.cpp AsyncEncoder.cpp)
 target_link_libraries(encode PUBLIC node)
 
 add_library(decode STATIC decoder.cpp)
