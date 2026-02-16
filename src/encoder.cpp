@@ -165,7 +165,7 @@ void Encoder::writeCodes(std::array<std::string, 256> &codes){
     ofstream out{filename_ + ".compress.codes"};
     out << std::ranges::count_if(codes, [](std::string s){return !s.empty();}) << endl;
 
-    out << std::filesystem::file_size(filename_ + ".compress") << endl;
+    out << std::filesystem::file_size(filename_) << endl;
     for (size_t i = 0; i < 256; ++i){
         if (codes[i] != ""){
             out << i << " " << codes[i] << endl;
@@ -175,8 +175,8 @@ void Encoder::writeCodes(std::array<std::string, 256> &codes){
 
 void Encoder::Encode(){
     std::array<std::string, 256> codes = getCodes();
-    writeToFile(codes);
     writeCodes(codes);
+    writeToFile(codes);
 
     size_t filelen = std::filesystem::file_size(filename_);
     size_t compSize = std::filesystem::file_size(filename_ + ".compress");
