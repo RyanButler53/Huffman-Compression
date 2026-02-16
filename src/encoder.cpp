@@ -186,8 +186,8 @@ void Encoder::Encode(){
     cout << "Compression Ratio: " << double(compSize) / filelen << endl;
 }
 
-    std::tuple<size_t, size_t, double> Encoder::getStats() const{
-        size_t filelen = std::filesystem::file_size(filename_);
-        size_t compSize = std::filesystem::file_size(filename_ + ".compress");
-        return {filelen, compSize, double(compSize) / filelen};
-    }
+std::tuple<size_t, size_t, double> Encoder::getStats() const{
+    size_t filelen = std::filesystem::file_size(filename_);
+    size_t compSize = std::filesystem::file_size(filename_ + ".compress");
+    return {filelen, compSize, double(compSize) / filelen};
+}

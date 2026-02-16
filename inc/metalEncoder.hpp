@@ -12,7 +12,6 @@ class GpuManager
     MTL::Device* device_;
     MTL::ComputePipelineState* pipeline_;
     MTL::CommandQueue* commandQueue_; // stream
-    MTL::Library* library_;
     size_t stringLen_; // length of the string as string characters, not bytes;
 
     void encodeCommand(MTL::ComputeCommandEncoder *computeEncoder, MTL::Buffer* compressedString, MTL::Buffer* compressedBytes);

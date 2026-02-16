@@ -5,24 +5,24 @@ GpuManager::GpuManager(MTL::Device* device, size_t stringLength):
 device_{device}, stringLen_{stringLength}
 {
     NS::Error *error = nullptr;
-    MTL::Library* library_ = device_->newDefaultLibrary();
-    if (!library_){throw std::invalid_argument("Could not load library");}
+    MTL::Library* library = device_->newDefaultLibrary();
+    if (!library){throw std::invalid_argument("Could not load library");}
 
     commandQueue_ = device_->newCommandQueue();
     if (!commandQueue_){ throw std::invalid_argument("Error initializing command queue"); }
 
     auto compressStr = NS::String::string("compress_bytes", NS::ASCIIStringEncoding);
-    MTL::Function* compressFunc = library_->newFunction(compressStr);
+    MTL::Function* compressFunc = library->newFunction(compressStr);
 
     pipeline_ = device_->newComputePipelineState(compressFunc, &error);
     compressFunc->release();
+    library->release();
 }
 
 GpuManager::~GpuManager()
 {
     pipeline_->release();
     commandQueue_->release();
-    library_->release();
 }
 
 // Setting up the kernel
