@@ -11,9 +11,14 @@ int main(int argc, const char** argv){
     }
 
     for (int i = 1; i < argc; ++i){
+        auto now = std::chrono::steady_clock::now();
         string filename = argv[i];
         Encoder e{filename};
         e.Encode();
+        auto done = std::chrono::steady_clock::now();
+
+        long ms = std::chrono::duration_cast<std::chrono::milliseconds>((done - now)).count();
+        std::cout << ms / 1000.0 << std::endl;
     }
 
     return 0;

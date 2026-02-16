@@ -42,8 +42,6 @@ class EncodeDecodeEquivalence : public ::testing::Test {
         std::string compressed = hashFile(dataDir_ / (fname + ".uncompress"));
     
         auto [length, complength, _] = e.getStats();
-        std::cout << "originalHash: " << originalHash << std::endl;
-        std::cout << "compressed hash: " << compressed << std::endl;
         ASSERT_EQ(originalHash, compressed);
         EXPECT_EQ(filelen, length);
         EXPECT_EQ(compSize, complength);
@@ -93,15 +91,12 @@ class EncodeDecodeEquivalence : public ::testing::Test {
 
 TEST_F(EncodeDecodeEquivalence, smaller){
     testFile("smaller.txt", 62, 31);
-    // 1ebb2bdc5ce08e6e90b3ede72a8ef315e3e1bced3a3c458f69b6d7eeff9e4f3a
 }
 
 TEST_F(EncodeDecodeEquivalence, small){
     testFile("small.txt", 162, 86);
-    // 7b3bae54e7a2931a1957c1ca23189cdf913f567e92af15089f033b99e33351f1
 }
 
 TEST_F(EncodeDecodeEquivalence, huffman){
-    testFile("huffman.txt", 19388, 11300);
-    // 6e0ef8440a2c791fbe2ed754db17aff1a7496b7ec1dca24a352965abc3359a84
+    testFile("huffman.txt", 19388, 11299);
 }

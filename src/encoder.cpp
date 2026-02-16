@@ -157,7 +157,6 @@ size_t Encoder::Async::readThread(){
     std::string extraBytes;
     while (true){
         std::string compressedString = extraBytes;
-        std::cout << "compressedString: " << compressedString << std::endl;
         input.read((char*)filechunk.data(), chunkSize);
         std::streamsize dataread = input.gcount();
 
@@ -211,7 +210,7 @@ size_t Encoder::Async::compressThread(){
 
 void Encoder::Async::writeThread(){
     bool last = false;
-    ofstream out{filename_ + ".compress", std::ios::in};
+    ofstream out{filename_ + ".compress", std::ios::out};
     // std::vector<unsigned char> buffer;
     while (!last){
         auto [buffer, lastMsg] = *writeQueue_.wait_and_pop();
@@ -254,10 +253,11 @@ void Encoder::writeCodes(std::array<std::string, 256> &codes){
 
 void Encoder::Encode(){
     std::array<std::string, 256>codes = getCodes();
-    std::cout << "got codes" << std::endl;
-    writeToFile(codes);
-    // writeToFileAsync(codes);
     writeCodes(codes);
+
+
+    writeToFileAsync(codes);
+    // writeToFile(codes);
 
     cout << "Original File Size: " << fileLen_ << " bytes" << endl;
     cout << "Compressed File Size: " << compFileLen_ << " bytes" << endl;
