@@ -9,10 +9,14 @@
 #include <atomic>
 #include <future>
 
+#ifdef HC_WITH_GPU
+#include "metalEncoder.hpp"
+#endif
+
 using namespace std;
 
-Encoder::Encoder(std::string file):
-filename_{file}, huffmanTree_{nullptr}, fileLen_{0}, compFileLen_{0}
+Encoder::Encoder(std::string file, execution::space space):
+filename_{file}, huffmanTree_{nullptr}, fileLen_{0}, compFileLen_{0}, space_{space}
 {
     // Read in from file, build a huffman tree of frequencies. 
     fstream input{filename_};
@@ -107,17 +111,42 @@ void Encoder::getCompressedString(std::string& compressedString, std::array<std:
 }
 
 void Encoder::getCompressedBytes(std::vector<unsigned char>& compressedChars, std::string& compressedString){
-    compressedChars.reserve(compressedString.size() / 8);
 
-    string::iterator it = begin(compressedString);
-    while(it != end(compressedString)){
-        unsigned char ch = 0;
-        for (size_t i = 0; i < 8; ++i){
-            ch = (ch << 1) | (*it == 1);
-            ++it;
+    if (space_ == execution::space::cpu){
+        compressedChars.reserve(compressedString.size() / 8);
+
+        string::iterator it = begin(compressedString);
+        while(it != end(compressedString)){
+            unsigned char ch = 0;
+            for (size_t i = 0; i < 8; ++i){
+                ch = (ch << 1) | (*it == 49); // 49 is ascii for "1"
+                ++it;
+            }
+            compressedChars.push_back(ch);
         }
-        compressedChars.push_back(ch);
+        return;
+    } else { // gpu
+     #ifdef HC_WITH_GPU
+        compressedChars.resize(compressedString.size() / 8);
+
+        MTL::Device* d = MTL::CreateSystemDefaultDevice();
+        size_t nbytes = compressedString.size();
+        
+        // not technically device memory...
+        MTL::Buffer* d_compString = d->newBuffer(nbytes, MTL::ResourceStorageModeShared);
+        MTL::Buffer* d_compBytes = d->newBuffer(nbytes / 8, MTL::ResourceStorageModeShared);
+        std::copy(compressedString.begin(), compressedString.end(), (char*)d_compString->contents());
+
+        MetalEncoder encoder(d, nbytes);
+
+        encoder.compress(d_compString, d_compBytes);
+        std::copy((char*)d_compBytes->contents(), (char*)d_compBytes->contents() + d_compBytes->length(), compressedChars.begin());
+        d->release();
+     #else
+        throw std::logic_error("Compression not compiled with GPU support");
+     #endif
     }
+
 }
 
 void Encoder::writeToFile(std::vector<unsigned char>& compressedChars){

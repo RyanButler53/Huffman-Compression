@@ -1,3 +1,8 @@
+#ifdef HC_WITH_GPU
+    #define NS_PRIVATE_IMPLEMENTATION
+    #define MTL_PRIVATE_IMPLEMENTATION
+#endif
+
 #include <gtest/gtest.h>
 #include <string>
 #include <filesystem>
@@ -7,6 +12,7 @@
 #include "decoder.hpp"
 
 #include <openssl/evp.h>
+
 
 
 class EncodeDecodeEquivalence : public ::testing::Test {

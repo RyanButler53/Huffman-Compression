@@ -1,4 +1,4 @@
-A C++ Implementation of the Huffman Compression algorithm. 
+A C++/Metal Implementation of the Huffman Compression algorithm. 
 
 ### Build: 
 
@@ -7,9 +7,13 @@ A C++ Implementation of the Huffman Compression algorithm.
 `cmake ..`
 `cmake --build . --parallel`
 
+### Build Options: 
+- `-DHC_DO_TESTS=ON`:  Turns on tests. See the Tests section
+- `-DHC_WITH_GPU=ON`: Tries to build with Metal-cpp bindings. Must provide `-Dmetal_ROOT=/path/to/metal-cpp/directory`. Apple only. Also requires xcode to be downloaded to run the `xcrun -sdk macosx metal` command to compile the kernels
+
 ### Compress:
 
-`./compress <filename1> <filename2> ...`
+`./compress [cpu|gpu] <filename1> <filename2> ...`
 
 ### Uncompress:
 
@@ -30,4 +34,4 @@ The `compress` command will make the file `filename.compress` and `filename.comp
 
 ### Roadmap: 
 
-- compressing folders
+- Asynchronous compression using kokkos or metal. 

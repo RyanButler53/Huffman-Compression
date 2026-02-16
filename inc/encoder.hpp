@@ -7,6 +7,17 @@
 
 #include "threadsafeQueue.hpp"
 
+#include "threadsafeQueue.hpp"
+
+#ifdef HC_WITH_GPU
+#include <Foundation/Foundation.hpp>
+#include <Metal/Metal.hpp>
+#endif
+
+
+namespace execution{
+  enum class space : uint8_t {cpu = 0, gpu = 1};
+}
 class Encoder
 {
   private:
@@ -14,6 +25,8 @@ class Encoder
     HuffmanNode* huffmanTree_;
     size_t fileLen_;
     size_t compFileLen_;
+    execution::space space_;
+
 
     void destructorHelper(HuffmanNode *&node);
     void codesHelper(const std::string &currentCode, HuffmanNode* curNode, std::array<std::string, 256>& codes);
@@ -29,7 +42,7 @@ class Encoder
     void writeCodes(std::array<std::string, 256>& codes);
 
   public:
-    Encoder(std::string file);
+    Encoder(std::string file, execution::space space = execution::space::cpu);
     ~Encoder();
 
     void Encode();
