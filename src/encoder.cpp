@@ -60,12 +60,13 @@ void Encoder::codesHelper(const string& currentCode, HuffmanNode* curNode, std::
 
 void Encoder::buildFromFreq(std::array<unsigned long, 256> freqs){
     priority_queue<HuffmanNode*, std::vector<HuffmanNode*>, HuffmanPtrCompare> q;
-    size_t n = freqs.size() - 1; // number of internal nodes
     for (size_t c = 0; c < 256; ++c){
         unsigned long freq = freqs[c];
-        q.push(new HuffmanNode(c, freq));
+        if (freq != 0){
+            q.push(new HuffmanNode(c, freq));
+        }
     }
-
+    size_t n = q.size() - 1;
     // Build the huffman Tree.
     for (size_t i = 0; i < n; ++i){
         HuffmanNode* left = q.top();
@@ -130,7 +131,7 @@ void Encoder::writeToFile(std::array<std::string, 256>& codes){
     // Have to read in the REAL FILE DATA
     string compressedString;
     getCompressedString(compressedString, codes);
-    
+    std::cout << "Compressed string size: " << compressedString.size() << std::endl;
     // turn into bytes.
     vector<unsigned char> compressedChars;
     getCompressedBytes(compressedChars, compressedString);
@@ -156,18 +157,21 @@ size_t Encoder::Async::readThread(){
     std::string extraBytes;
     while (true){
         std::string compressedString = extraBytes;
-
+        std::cout << "compressedString: " << compressedString << std::endl;
         input.read((char*)filechunk.data(), chunkSize);
-        for (unsigned char c : filechunk){
+        std::streamsize dataread = input.gcount();
+
+        for (size_t i = 0; i < dataread; ++i){
+            unsigned char c = filechunk[i];
             compressedString.append(codes_[c]);
         }
-        std::streamsize dataread = input.gcount();
         if (dataread < chunkSize){ // last one
             // Pad the rest of the values with ones. 
             while (compressedString.length() % 8 != 0){
                 compressedString.append("1");
             }
             compressQueue_.push({compressedString, true});
+            break;
         } else {
             size_t extra = compressedString.size() % 8;
             std::copy(compressedString.end() - extra, compressedString.end(), extraBytes.begin());
@@ -182,7 +186,9 @@ size_t Encoder::Async::compressThread(){
     bool last = false;
     size_t compressedFileLen = 0;
     while (!last){
-        auto [compressedString, last] = *compressQueue_.wait_and_pop();
+        auto [compressedString, lastMsg] = *compressQueue_.wait_and_pop();
+        last = lastMsg;
+
         if (compressedString.size() % 8 != 0){
             std::cout << "Error: Compressed string must be a multiple of 8 bytes long" << std::endl;
         }
@@ -206,9 +212,10 @@ size_t Encoder::Async::compressThread(){
 void Encoder::Async::writeThread(){
     bool last = false;
     ofstream out{filename_ + ".compress", std::ios::in};
-    std::vector<unsigned char> buffer;
+    // std::vector<unsigned char> buffer;
     while (!last){
-        auto [buffer, last] = *writeQueue_.wait_and_pop();
+        auto [buffer, lastMsg] = *writeQueue_.wait_and_pop();
+        last = lastMsg;
         out.write((char*) buffer.data(), buffer.size());
     }
 }
@@ -228,13 +235,15 @@ std::pair<size_t, size_t> Encoder::Async::launch(){
 void Encoder::writeToFileAsync(const std::array<std::string, 256>& codes){
 
     Async asyncManager(codes, filename_);
-    auto [fileLen_, compFileLen_] = asyncManager.launch();
-
+    auto [fileSize, compressedSize] = asyncManager.launch();
+    fileLen_ = fileSize;
+    compFileLen_ = compressedSize;
 }
 
 void Encoder::writeCodes(std::array<std::string, 256> &codes){
     ofstream out{filename_ + ".compress.codes"};
-    out << codes.size() << endl;
+    std::cout << std::ranges::count_if(codes, [](std::string s){return !s.empty();}) << std::endl;
+    out << std::ranges::count_if(codes, [](std::string s){return !s.empty();}) << endl;
     out << fileLen_ << endl;
     for (size_t i = 0; i < 256; ++i){
         if (codes[i] != ""){
@@ -245,11 +254,16 @@ void Encoder::writeCodes(std::array<std::string, 256> &codes){
 
 void Encoder::Encode(){
     std::array<std::string, 256>codes = getCodes();
-    // writeToFile(codes);
-    writeToFileAsync(codes);
+    std::cout << "got codes" << std::endl;
+    writeToFile(codes);
+    // writeToFileAsync(codes);
     writeCodes(codes);
 
     cout << "Original File Size: " << fileLen_ << " bytes" << endl;
     cout << "Compressed File Size: " << compFileLen_ << " bytes" << endl;
     cout << "Compression Ratio: " << double(compFileLen_) / fileLen_ << endl;
 }
+
+    std::tuple<size_t, size_t, double> Encoder::getStats() const{
+        return {fileLen_, compFileLen_, double(compFileLen_) / fileLen_};
+    }

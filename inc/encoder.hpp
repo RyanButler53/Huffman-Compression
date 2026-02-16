@@ -54,6 +54,7 @@ class Encoder
     ~Encoder();
 
     void Encode();
+    std::tuple<size_t, size_t, double> getStats() const;
 };
 
 #endif
