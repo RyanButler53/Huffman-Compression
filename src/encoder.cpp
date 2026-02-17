@@ -11,6 +11,7 @@
 
 #ifdef HC_WITH_GPU
 #include "metalEncoder.hpp"
+#include "asyncGpuEncoder.hpp"
 #endif
 
 using namespace std;
@@ -46,10 +47,13 @@ std::unique_ptr<Encoder> Encoder::make(execution::space space, std::string filen
         return std::make_unique<Encoder>(filename);
     case execution::space::async:
         return std::make_unique<AsyncEncoder>(filename);
+    #ifdef HC_WITH_GPU
     case execution::space::gpu:
-        #ifdef HC_WITH_GPU
         return std::make_unique<MetalEncoder>(filename);
-        #endif    
+    case execution::space::async_gpu:
+        return std::make_unique<AsyncGpuEncoder>(filename);
+    #endif   
+
     default:
         throw std::invalid_argument("Invalid Encoder");
     }

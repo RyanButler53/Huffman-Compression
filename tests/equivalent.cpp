@@ -133,4 +133,16 @@ TEST_F(EncodeDecodeEquivalence, smallGPU){
 TEST_F(EncodeDecodeEquivalence, huffmanGPU){
     testFile("huffman.txt", 19388, 11299, execution::space::gpu);
 }
+
+TEST_F(EncodeDecodeEquivalence, smallerAsyncGPU){
+    testFile("smaller.txt", 62, 31, execution::space::async_gpu);
+}
+
+TEST_F(EncodeDecodeEquivalence, smallAsyncGPU){
+    testFile("small.txt", 162, 86, execution::space::async_gpu);
+}
+
+TEST_F(EncodeDecodeEquivalence, huffmanAsyncGPU){
+    testFile("huffman.txt", 19388, 11299, execution::space::async_gpu);
+}
 #endif

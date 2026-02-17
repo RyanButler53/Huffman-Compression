@@ -43,7 +43,6 @@ void GpuManager::encodeCommand(MTL::ComputeCommandEncoder* computeEncoder,
     MTL::Size threadgroupSize = MTL::Size::Make(threadGroupSize, 1, 1);
     // Encode the compute command.
     computeEncoder->dispatchThreads(gridSize, threadgroupSize);
-
 }
 
 void  GpuManager::compress(MTL::Buffer* compressedString, MTL::Buffer* compressedBytes){

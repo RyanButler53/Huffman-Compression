@@ -7,8 +7,6 @@
 
 #include "threadsafeQueue.hpp"
 
-#include "threadsafeQueue.hpp"
-
 #ifdef HC_WITH_GPU
 #include <Foundation/Foundation.hpp>
 #include <Metal/Metal.hpp>
@@ -16,7 +14,7 @@
 
 
 namespace execution{
-  enum class space : uint8_t {cpu = 0, async = 1, gpu = 2};
+  enum class space : uint8_t {cpu = 0, async = 1, gpu = 2, async_gpu = 3};
 }
 class Encoder
 {

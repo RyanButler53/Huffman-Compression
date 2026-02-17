@@ -69,7 +69,6 @@ void AsyncEncoder::compressThread(){
 void AsyncEncoder::writeThread(){
     bool last = false;
     std::ofstream out{filename_ + ".compress", std::ios::out};
-    // std::vector<unsigned char> buffer;
     while (!last){
         auto [buffer, lastMsg] = *writeQueue_.wait_and_pop();
         last = lastMsg;
