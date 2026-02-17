@@ -1,32 +1,32 @@
 #ifdef HC_WITH_GPU
 #include "metalEncoder.hpp"
 
-MetalEncoder::MetalEncoder(MTL::Device* device, size_t stringLength):
+GpuManager::GpuManager(MTL::Device* device, size_t stringLength):
 device_{device}, stringLen_{stringLength}
 {
     NS::Error *error = nullptr;
-    MTL::Library* library_ = device_->newDefaultLibrary();
-    if (!library_){throw std::invalid_argument("Could not load library");}
+    MTL::Library* library = device_->newDefaultLibrary();
+    if (!library){throw std::invalid_argument("Could not load library");}
 
     commandQueue_ = device_->newCommandQueue();
     if (!commandQueue_){ throw std::invalid_argument("Error initializing command queue"); }
 
     auto compressStr = NS::String::string("compress_bytes", NS::ASCIIStringEncoding);
-    MTL::Function* compressFunc = library_->newFunction(compressStr);
+    MTL::Function* compressFunc = library->newFunction(compressStr);
 
     pipeline_ = device_->newComputePipelineState(compressFunc, &error);
     compressFunc->release();
+    library->release();
 }
 
-MetalEncoder::~MetalEncoder()
+GpuManager::~GpuManager()
 {
     pipeline_->release();
     commandQueue_->release();
-    library_->release();
 }
 
 // Setting up the kernel
-void MetalEncoder::encodeCommand(MTL::ComputeCommandEncoder* computeEncoder, 
+void GpuManager::encodeCommand(MTL::ComputeCommandEncoder* computeEncoder, 
                                  MTL::Buffer* compressedString, MTL::Buffer* compressedBytes){
 
     computeEncoder->setComputePipelineState(pipeline_);
@@ -46,7 +46,7 @@ void MetalEncoder::encodeCommand(MTL::ComputeCommandEncoder* computeEncoder,
 
 }
 
-void  MetalEncoder::compress(MTL::Buffer* compressedString, MTL::Buffer* compressedBytes){
+void  GpuManager::compress(MTL::Buffer* compressedString, MTL::Buffer* compressedBytes){
     MTL::CommandBuffer* commandBuffer = commandQueue_->commandBuffer();
     MTL::ComputeCommandEncoder* computeEncoder = commandBuffer->computeCommandEncoder();
 
@@ -58,6 +58,24 @@ void  MetalEncoder::compress(MTL::Buffer* compressedString, MTL::Buffer* compres
     commandBuffer->commit();
 
     commandBuffer->waitUntilCompleted();
+}
+
+void MetalEncoder::getCompressedBytes(std::vector<unsigned char>& compressedChars, std::string& compressedString) {
+    compressedChars.resize(compressedString.size() / 8);
+
+    MTL::Device* d = MTL::CreateSystemDefaultDevice();
+    size_t nbytes = compressedString.size();
+    
+    // not technically device memory...
+    MTL::Buffer* d_compString = d->newBuffer(nbytes, MTL::ResourceStorageModeShared);
+    MTL::Buffer* d_compBytes = d->newBuffer(nbytes / 8, MTL::ResourceStorageModeShared);
+    std::copy(compressedString.begin(), compressedString.end(), (char*)d_compString->contents());
+
+    GpuManager gpu(d, nbytes);
+
+    gpu.compress(d_compString, d_compBytes);
+    std::copy((char*)d_compBytes->contents(), (char*)d_compBytes->contents() + d_compBytes->length(), compressedChars.begin());
+    d->release();
 }
 
 #endif
