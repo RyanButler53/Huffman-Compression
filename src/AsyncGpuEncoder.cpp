@@ -5,6 +5,11 @@
 #include <iostream>
 
 
+void AsyncGpuEncoder::init(){
+    auto counts = asyncInit(filename_);
+    buildFromFreq(counts);
+}
+
 void AsyncGpuEncoder::readThread(std::array<std::string, 256>& codes){
     std::fstream input{filename_, std::ios::in};
     unsigned char c;

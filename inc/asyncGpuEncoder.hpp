@@ -1,11 +1,11 @@
 #ifdef HC_WITH_GPU
 #pragma once
 
-
 #include "gpuMixin.hpp"
+#include "asyncMixin.hpp"
 #include "encoder.hpp"
 
-class AsyncGpuEncoder : public Encoder, GpuMixin {
+class AsyncGpuEncoder : public Encoder, GpuMixin, AsyncMixin {
 
     struct CompressedBytesPacket
     {
@@ -14,7 +14,6 @@ class AsyncGpuEncoder : public Encoder, GpuMixin {
         bool last;
     };
     
-
     ThreadsafeQueue<CompressedBytesPacket> writeQueue_;
 
 
@@ -23,6 +22,7 @@ class AsyncGpuEncoder : public Encoder, GpuMixin {
     void writeThread();
     void pushToGpu(std::string& compressedString, bool last);
 
+    void init() override;
 
     public:
     // Open GPU and set up kernels for async
