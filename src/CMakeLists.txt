@@ -1,7 +1,7 @@
 add_library(node STATIC huffmanNode.cpp)
 target_include_directories(node PUBLIC ${CMAKE_SOURCE_DIR}/inc)
 
-set(ENCODE_GPU_SRC metalEncoder.cpp AsyncGpuEncoder.cpp)
+set(ENCODE_GPU_SRC metalEncoder.cpp AsyncGpuEncoder.cpp gpuEncoder.cpp)
 set(ENCODE_SRC encoder.cpp AsyncEncoder.cpp $<$<BOOL:${HC_WITH_GPU}>:${ENCODE_GPU_SRC}>)
 
 add_library(encode STATIC ${ENCODE_SRC})

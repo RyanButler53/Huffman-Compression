@@ -1,14 +1,10 @@
 #ifdef HC_WITH_GPU
 #pragma once
 
-#include <Foundation/Foundation.hpp>
-#include <Metal/Metal.hpp>
 
-#include <string>
+#include "gpuEncoder.hpp"
 
-#include "encoder.hpp"
-
-class AsyncGpuEncoder : public Encoder{
+class AsyncGpuEncoder : public GpuEncoder{
 
     struct CompressedBytesPacket
     {
@@ -20,13 +16,6 @@ class AsyncGpuEncoder : public Encoder{
 
     ThreadsafeQueue<CompressedBytesPacket> writeQueue_;
 
-    // GPU Variables
-    MTL::Device* device_;
-    MTL::CommandQueue* commandQueue_;
-    MTL::ComputePipelineState* pipeline_;
-
-    void encodeCommand(MTL::ComputeCommandEncoder* computeEncoder, 
-        MTL::Buffer* compressedString, MTL::Buffer* compressedBytes);
 
     // Async Functions
     void readThread(std::array<std::string, 256>& codes);
@@ -36,7 +25,7 @@ class AsyncGpuEncoder : public Encoder{
 
     public:
     // Open GPU and set up kernels for async
-    AsyncGpuEncoder(std::string file);
+    using GpuEncoder::GpuEncoder;
 
     void writeToFile(std::array<std::string, 256>& codes) override;
 };
