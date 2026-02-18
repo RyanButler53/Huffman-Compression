@@ -6,7 +6,7 @@
 
 #include "encoder.hpp"
 
-class GpuEncoder : public Encoder{
+class GpuMixin {
 
     protected:
 
@@ -16,8 +16,8 @@ class GpuEncoder : public Encoder{
     MTL::ComputePipelineState* pipeline_;
 
     public:
-    GpuEncoder(std::string file);
-    virtual ~GpuEncoder();
+    GpuMixin();
+    virtual ~GpuMixin();
 
     void encodeCommand(MTL::ComputeCommandEncoder *computeEncoder, MTL::Buffer* compressedString, MTL::Buffer* compressedBytes);
 };

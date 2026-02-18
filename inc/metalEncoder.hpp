@@ -3,17 +3,17 @@
 #ifdef HC_WITH_GPU
 
 
-#include "gpuEncoder.hpp"
+#include "gpuMixin.hpp"
+#include "encoder.hpp"
 
-
-
-class MetalEncoder : public GpuEncoder {
+class MetalEncoder : public Encoder, GpuMixin {
     
     void compress(MTL::Buffer* compressedString, MTL::Buffer* compressedBytes);
     void getCompressedBytes(std::vector<unsigned char>& compressedChars, std::string& compressedString) override;
 
     public: 
-    using GpuEncoder::GpuEncoder;
+    using Encoder::Encoder;
+    using GpuMixin::GpuMixin;
 
 };
 

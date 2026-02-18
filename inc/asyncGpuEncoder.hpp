@@ -2,9 +2,10 @@
 #pragma once
 
 
-#include "gpuEncoder.hpp"
+#include "gpuMixin.hpp"
+#include "encoder.hpp"
 
-class AsyncGpuEncoder : public GpuEncoder{
+class AsyncGpuEncoder : public Encoder, GpuMixin {
 
     struct CompressedBytesPacket
     {
@@ -25,7 +26,8 @@ class AsyncGpuEncoder : public GpuEncoder{
 
     public:
     // Open GPU and set up kernels for async
-    using GpuEncoder::GpuEncoder;
+    using Encoder::Encoder;
+    using GpuMixin::GpuMixin;
 
     void writeToFile(std::array<std::string, 256>& codes) override;
 };

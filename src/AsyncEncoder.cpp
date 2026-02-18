@@ -6,38 +6,8 @@
 
 void AsyncEncoder::init() {
 
-    std::fstream input{filename_, std::ios::in};
-    if (!input.is_open()){
-        std::cerr << "Unable to read file" << std::endl;
-        return;
-    }
-    std::array<unsigned long, 256> counts;
-    std::thread count([this, &counts](){countThread(counts);});
-    while(true){
-        std::vector<unsigned char> filechunk(chunkSize_);
-        input.read((char*)filechunk.data(), chunkSize_);
-        std::streamsize dataread = input.gcount();
-        filechunk.resize(dataread);
-        readQueue_.push(filechunk);
-        if (dataread != chunkSize_){
-            break;
-        }
-    }
-    count.join();
+    std::array<unsigned long, 256> counts = asyncInit(filename_);
     buildFromFreq(counts);
-}
-
-void AsyncEncoder::countThread(std::array<unsigned long, 256>& counts){
-    std::ranges::fill(counts, 0);
-    while (true){
-        std::vector<unsigned char> data = *readQueue_.wait_and_pop();
-        for (unsigned char c : data){
-            counts[c] += 1;
-        }
-        if (data.size() != chunkSize_){
-            return;
-        }
-    }
 }
 
 void AsyncEncoder::readThread(std::array<std::string, 256>& codes){

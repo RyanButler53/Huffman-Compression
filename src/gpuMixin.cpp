@@ -1,8 +1,8 @@
 #ifdef HC_WITH_GPU
 
-#include "asyncGpuEncoder.hpp"
+#include "gpuMixin.hpp"
 
-GpuEncoder::GpuEncoder(std::string file):Encoder(file){
+GpuMixin::GpuMixin(){
     device_ = MTL::CreateSystemDefaultDevice();
     if (!device_){
         throw("Error opening device");
@@ -23,13 +23,13 @@ GpuEncoder::GpuEncoder(std::string file):Encoder(file){
     library->release();
 }
 
-GpuEncoder::~GpuEncoder(){
+GpuMixin::~GpuMixin(){
     device_->release();
     commandQueue_->release();
     pipeline_->release();
 }
 
-void GpuEncoder::encodeCommand(MTL::ComputeCommandEncoder* computeEncoder, 
+void GpuMixin::encodeCommand(MTL::ComputeCommandEncoder* computeEncoder, 
     MTL::Buffer* compressedString, MTL::Buffer* compressedBytes){
 
     computeEncoder->setComputePipelineState(pipeline_);

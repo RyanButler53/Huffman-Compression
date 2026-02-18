@@ -90,7 +90,9 @@ void Encoder::buildFromFreq(std::array<unsigned long, 256> freqs){
             q.push(new HuffmanNode(c, freq));
         }
     }
-    
+    if (q.empty()){
+        return;
+    }
     size_t n = q.size() - 1;
     // Build the huffman Tree.
     for (size_t i = 0; i < n; ++i){

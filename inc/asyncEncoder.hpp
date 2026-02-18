@@ -1,25 +1,23 @@
 #pragma once
 #include "threadsafeQueue.hpp"
 #include "encoder.hpp"
+#include "asyncMixin.hpp"
 #include <string>
 #include <vector>
 #include <tuple>
 #include <array>
 
-class AsyncEncoder : public Encoder {
+class AsyncEncoder : public Encoder, AsyncMixin {
 
     ThreadsafeQueue<std::pair<std::string, bool>> compressQueue_;
     ThreadsafeQueue<std::pair<std::vector<unsigned char>, bool>> writeQueue_;
-    ThreadsafeQueue<std::vector<unsigned char>> readQueue_;
 
-    const size_t chunkSize_ = 1024 * 1024;
-
+    // Main Encoding Asynchronous operations
     void readThread(std::array<std::string, 256>& codes); // returns the total file size
     void compressThread(); // returns the compressed file size
     void writeThread();
-    void countThread(std::array<unsigned long, 256>& codes);
 
-
+    // Override initialization for async initialization
     void init() override;
 
     public:
