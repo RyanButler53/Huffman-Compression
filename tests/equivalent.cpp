@@ -15,7 +15,7 @@
 
 
 
-class EncodeDecodeEquivalence : public ::testing::Test {
+class EncodeDecodeEquivalence : public ::testing::TestWithParam<execution::space> {
 
     protected:
     std::filesystem::path dataDir_;
@@ -95,54 +95,19 @@ class EncodeDecodeEquivalence : public ::testing::Test {
 
 };
 
-TEST_F(EncodeDecodeEquivalence, smallerCpu){
-    testFile("smaller.txt", 62, 31, execution::space::cpu);
+TEST_P(EncodeDecodeEquivalence, smaller){
+    testFile("smaller.txt", 62, 31, GetParam());
 }
 
-TEST_F(EncodeDecodeEquivalence, smallCpu){
-    testFile("small.txt", 162, 86, execution::space::cpu);
+TEST_P(EncodeDecodeEquivalence, small){
+    testFile("small.txt", 162, 86,GetParam() );
 }
 
-TEST_F(EncodeDecodeEquivalence, huffmanCpu){
-    testFile("huffman.txt", 19388, 11299, execution::space::cpu);
+TEST_P(EncodeDecodeEquivalence, huffman){
+    testFile("huffman.txt", 19388, 11299, GetParam());
 }
 
-// Async 
-
-TEST_F(EncodeDecodeEquivalence, smallerAsync){
-    testFile("smaller.txt", 62, 31, execution::space::async);
-}
-
-TEST_F(EncodeDecodeEquivalence, smallAsync){
-    testFile("small.txt", 162, 86, execution::space::async);
-}
-
-TEST_F(EncodeDecodeEquivalence, huffmanAsync){
-    testFile("huffman.txt", 19388, 11299, execution::space::async);
-}
-
+INSTANTIATE_TEST_SUITE_P(EquivalenceCPU, EncodeDecodeEquivalence, testing::Values(execution::space::cpu, execution::space::async));
 #ifdef HC_WITH_GPU
-TEST_F(EncodeDecodeEquivalence, smallerGPU){
-    testFile("smaller.txt", 62, 31, execution::space::gpu);
-}
-
-TEST_F(EncodeDecodeEquivalence, smallGPU){
-    testFile("small.txt", 162, 86, execution::space::gpu);
-}
-
-TEST_F(EncodeDecodeEquivalence, huffmanGPU){
-    testFile("huffman.txt", 19388, 11299, execution::space::gpu);
-}
-
-TEST_F(EncodeDecodeEquivalence, smallerAsyncGPU){
-    testFile("smaller.txt", 62, 31, execution::space::async_gpu);
-}
-
-TEST_F(EncodeDecodeEquivalence, smallAsyncGPU){
-    testFile("small.txt", 162, 86, execution::space::async_gpu);
-}
-
-TEST_F(EncodeDecodeEquivalence, huffmanAsyncGPU){
-    testFile("huffman.txt", 19388, 11299, execution::space::async_gpu);
-}
+INSTANTIATE_TEST_SUITE_P(EquivalenceGPU, EncodeDecodeEquivalence, testing::Values(execution::space::gpu, execution::space::async_gpu));
 #endif

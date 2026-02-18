@@ -32,6 +32,9 @@ int main(int argc, const char** argv){
     } else if (firstArg == "async"){
         space = execution::space::async;
         ++arg_i;
+    } else if (firstArg == "async_gpu") {
+        space = execution::space::async_gpu;
+        ++arg_i;
     }
     for (; arg_i < argc; ++arg_i){
         auto now = std::chrono::steady_clock::now();
