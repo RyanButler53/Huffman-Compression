@@ -156,7 +156,6 @@ void Encoder::writeToFile(std::array<std::string, 256>& codes){
     // Have to read in the REAL FILE DATA
     string compressedString;
     getCompressedString(compressedString, codes);
-    std::cout << "Compressed string size: " << compressedString.size() << std::endl;
     // turn into bytes.
     vector<unsigned char> compressedChars;
     getCompressedBytes(compressedChars, compressedString);
@@ -184,10 +183,6 @@ void Encoder::Encode(){
 
     size_t filelen = std::filesystem::file_size(filename_);
     size_t compSize = std::filesystem::file_size(filename_ + ".compress");
-    std::cout << "Unique Characters: " << std::ranges::count_if(codes, [](std::string s){return !s.empty();}) << std::endl;
-    cout << "Original File Size: " << filelen << " bytes" << endl;
-    cout << "Compressed File Size: " << compSize << " bytes" << endl;
-    cout << "Compression Ratio: " << double(compSize) / filelen << endl;
 }
 
 std::tuple<size_t, size_t, double> Encoder::getStats() const{
