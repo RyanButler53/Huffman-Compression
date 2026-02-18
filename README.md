@@ -13,7 +13,7 @@ A C++/Metal Implementation of the Huffman Compression algorithm.
 
 ### Compress:
 
-`./compress [cpu|gpu] <filename1> <filename2> ...`
+`./compress [cpu|gpu|async|async_gpu] <filename1> <filename2> ...`
 
 ### Uncompress:
 

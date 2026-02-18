@@ -11,13 +11,15 @@
 
 #ifdef HC_WITH_GPU
 #include "metalEncoder.hpp"
+#include "asyncGpuEncoder.hpp"
 #endif
 
 using namespace std;
 
 Encoder::Encoder(std::string file):
-filename_{file}, huffmanTree_{nullptr}
-{
+filename_{file}, huffmanTree_{nullptr}{}
+
+void Encoder::init(){
     // Read in from file, build a huffman tree of frequencies. 
     fstream input{filename_};
     std::array<unsigned long, 256> counts;
@@ -46,10 +48,13 @@ std::unique_ptr<Encoder> Encoder::make(execution::space space, std::string filen
         return std::make_unique<Encoder>(filename);
     case execution::space::async:
         return std::make_unique<AsyncEncoder>(filename);
+    #ifdef HC_WITH_GPU
     case execution::space::gpu:
-        #ifdef HC_WITH_GPU
         return std::make_unique<MetalEncoder>(filename);
-        #endif    
+    case execution::space::async_gpu:
+        return std::make_unique<AsyncGpuEncoder>(filename);
+    #endif   
+
     default:
         throw std::invalid_argument("Invalid Encoder");
     }
@@ -84,6 +89,9 @@ void Encoder::buildFromFreq(std::array<unsigned long, 256> freqs){
         if (freq != 0){
             q.push(new HuffmanNode(c, freq));
         }
+    }
+    if (q.empty()){
+        return;
     }
     size_t n = q.size() - 1;
     // Build the huffman Tree.
@@ -152,7 +160,6 @@ void Encoder::writeToFile(std::array<std::string, 256>& codes){
     // Have to read in the REAL FILE DATA
     string compressedString;
     getCompressedString(compressedString, codes);
-    std::cout << "Compressed string size: " << compressedString.size() << std::endl;
     // turn into bytes.
     vector<unsigned char> compressedChars;
     getCompressedBytes(compressedChars, compressedString);
@@ -174,16 +181,13 @@ void Encoder::writeCodes(std::array<std::string, 256> &codes){
 }
 
 void Encoder::Encode(){
+    init(); // build tree;
     std::array<std::string, 256> codes = getCodes();
     writeCodes(codes);
     writeToFile(codes);
 
     size_t filelen = std::filesystem::file_size(filename_);
     size_t compSize = std::filesystem::file_size(filename_ + ".compress");
-    std::cout << "Unique Characters: " << std::ranges::count_if(codes, [](std::string s){return !s.empty();}) << std::endl;
-    cout << "Original File Size: " << filelen << " bytes" << endl;
-    cout << "Compressed File Size: " << compSize << " bytes" << endl;
-    cout << "Compression Ratio: " << double(compSize) / filelen << endl;
 }
 
 std::tuple<size_t, size_t, double> Encoder::getStats() const{

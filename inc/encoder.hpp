@@ -7,8 +7,6 @@
 
 #include "threadsafeQueue.hpp"
 
-#include "threadsafeQueue.hpp"
-
 #ifdef HC_WITH_GPU
 #include <Foundation/Foundation.hpp>
 #include <Metal/Metal.hpp>
@@ -16,7 +14,7 @@
 
 
 namespace execution{
-  enum class space : uint8_t {cpu = 0, async = 1, gpu = 2};
+  enum class space : uint8_t {cpu = 0, async = 1, gpu = 2, async_gpu = 3};
 }
 class Encoder
 {
@@ -28,10 +26,10 @@ class Encoder
 
     void destructorHelper(HuffmanNode *&node);
     void codesHelper(const std::string &currentCode, HuffmanNode* curNode, std::array<std::string, 256>& codes);
-    void buildFromFreq(std::array<unsigned long, 256> freqs);
     std::array<std::string, 256> getCodes();
 
     // 3 helper methods for writeToFile() method 
+    virtual void init();
     virtual void getCompressedString(std::string& compressedString, std::array<std::string, 256>& codes);
     virtual void getCompressedBytes(std::vector<unsigned char>& compressedChars, std::string& compressedString);
     virtual void writeToFile(std::vector<unsigned char>& compressedChars);
@@ -41,6 +39,8 @@ class Encoder
     void writeCodes(std::array<std::string, 256>& codes);
 
   protected:
+    void buildFromFreq(std::array<unsigned long, 256> freqs);
+
     std::string filename_;
 
   public:

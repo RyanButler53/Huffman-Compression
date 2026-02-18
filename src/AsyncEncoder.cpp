@@ -4,27 +4,31 @@
 #include <thread>
 #include <future>
 
+void AsyncEncoder::init() {
+
+    std::array<unsigned long, 256> counts = asyncInit(filename_);
+    buildFromFreq(counts);
+}
+
 void AsyncEncoder::readThread(std::array<std::string, 256>& codes){
     std::fstream input{filename_, std::ios::in};
-    unsigned char c;
     if (!input.is_open()){
         std::cerr << "Unable to read file" << std::endl;
         compressQueue_.push({"", true});
     }
     // read into 1 MB chunks
-    const size_t chunkSize = 1024 * 1024;
-    std::vector<unsigned char> filechunk(chunkSize);
+    std::vector<unsigned char> filechunk(chunkSize_);
     std::string extraBytes;
     while (true){
         std::string compressedString = extraBytes;
-        input.read((char*)filechunk.data(), chunkSize);
+        input.read((char*)filechunk.data(), chunkSize_);
         std::streamsize dataread = input.gcount();
 
         for (size_t i = 0; i < dataread; ++i){
             unsigned char c = filechunk[i];
             compressedString.append(codes[c]);
         }
-        if (dataread < chunkSize){ // last one
+        if (dataread < chunkSize_){ // last one
             // Pad the rest of the values with ones. 
             while (compressedString.length() % 8 != 0){
                 compressedString.append("1");
@@ -69,7 +73,6 @@ void AsyncEncoder::compressThread(){
 void AsyncEncoder::writeThread(){
     bool last = false;
     std::ofstream out{filename_ + ".compress", std::ios::out};
-    // std::vector<unsigned char> buffer;
     while (!last){
         auto [buffer, lastMsg] = *writeQueue_.wait_and_pop();
         last = lastMsg;

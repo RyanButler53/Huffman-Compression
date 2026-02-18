@@ -32,6 +32,9 @@ int main(int argc, const char** argv){
     } else if (firstArg == "async"){
         space = execution::space::async;
         ++arg_i;
+    } else if (firstArg == "async_gpu") {
+        space = execution::space::async_gpu;
+        ++arg_i;
     }
     for (; arg_i < argc; ++arg_i){
         auto now = std::chrono::steady_clock::now();
@@ -42,6 +45,10 @@ int main(int argc, const char** argv){
 
         long ms = std::chrono::duration_cast<std::chrono::milliseconds>((done - now)).count();
         std::cout << ms / 1000.0 << std::endl;
+        auto [filelen, compSize, compRatio] = e->getStats();
+        cout << "Original File Size: " << filelen << " bytes" << endl;
+        cout << "Compressed File Size: " << compSize << " bytes" << endl;
+        cout << "Compression Ratio: " << compRatio << endl;
     }
 
     return 0;
