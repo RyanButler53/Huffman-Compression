@@ -4,27 +4,61 @@
 #include <thread>
 #include <future>
 
+void AsyncEncoder::init() {
+
+    std::fstream input{filename_, std::ios::in};
+    if (!input.is_open()){
+        std::cerr << "Unable to read file" << std::endl;
+        return;
+    }
+    std::array<unsigned long, 256> counts;
+    std::thread count([this, &counts](){countThread(counts);});
+    while(true){
+        std::vector<unsigned char> filechunk(chunkSize_);
+        input.read((char*)filechunk.data(), chunkSize_);
+        std::streamsize dataread = input.gcount();
+        filechunk.resize(dataread);
+        readQueue_.push(filechunk);
+        if (dataread != chunkSize_){
+            break;
+        }
+    }
+    count.join();
+    buildFromFreq(counts);
+}
+
+void AsyncEncoder::countThread(std::array<unsigned long, 256>& counts){
+    std::ranges::fill(counts, 0);
+    while (true){
+        std::vector<unsigned char> data = *readQueue_.wait_and_pop();
+        for (unsigned char c : data){
+            counts[c] += 1;
+        }
+        if (data.size() != chunkSize_){
+            return;
+        }
+    }
+}
+
 void AsyncEncoder::readThread(std::array<std::string, 256>& codes){
     std::fstream input{filename_, std::ios::in};
-    unsigned char c;
     if (!input.is_open()){
         std::cerr << "Unable to read file" << std::endl;
         compressQueue_.push({"", true});
     }
     // read into 1 MB chunks
-    const size_t chunkSize = 1024 * 1024;
-    std::vector<unsigned char> filechunk(chunkSize);
+    std::vector<unsigned char> filechunk(chunkSize_);
     std::string extraBytes;
     while (true){
         std::string compressedString = extraBytes;
-        input.read((char*)filechunk.data(), chunkSize);
+        input.read((char*)filechunk.data(), chunkSize_);
         std::streamsize dataread = input.gcount();
 
         for (size_t i = 0; i < dataread; ++i){
             unsigned char c = filechunk[i];
             compressedString.append(codes[c]);
         }
-        if (dataread < chunkSize){ // last one
+        if (dataread < chunkSize_){ // last one
             // Pad the rest of the values with ones. 
             while (compressedString.length() % 8 != 0){
                 compressedString.append("1");

@@ -17,8 +17,9 @@
 using namespace std;
 
 Encoder::Encoder(std::string file):
-filename_{file}, huffmanTree_{nullptr}
-{
+filename_{file}, huffmanTree_{nullptr}{}
+
+void Encoder::init(){
     // Read in from file, build a huffman tree of frequencies. 
     fstream input{filename_};
     std::array<unsigned long, 256> counts;
@@ -89,6 +90,7 @@ void Encoder::buildFromFreq(std::array<unsigned long, 256> freqs){
             q.push(new HuffmanNode(c, freq));
         }
     }
+    
     size_t n = q.size() - 1;
     // Build the huffman Tree.
     for (size_t i = 0; i < n; ++i){
@@ -177,6 +179,7 @@ void Encoder::writeCodes(std::array<std::string, 256> &codes){
 }
 
 void Encoder::Encode(){
+    init(); // build tree;
     std::array<std::string, 256> codes = getCodes();
     writeCodes(codes);
     writeToFile(codes);

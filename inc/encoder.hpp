@@ -26,10 +26,10 @@ class Encoder
 
     void destructorHelper(HuffmanNode *&node);
     void codesHelper(const std::string &currentCode, HuffmanNode* curNode, std::array<std::string, 256>& codes);
-    void buildFromFreq(std::array<unsigned long, 256> freqs);
     std::array<std::string, 256> getCodes();
 
     // 3 helper methods for writeToFile() method 
+    virtual void init();
     virtual void getCompressedString(std::string& compressedString, std::array<std::string, 256>& codes);
     virtual void getCompressedBytes(std::vector<unsigned char>& compressedChars, std::string& compressedString);
     virtual void writeToFile(std::vector<unsigned char>& compressedChars);
@@ -39,6 +39,8 @@ class Encoder
     void writeCodes(std::array<std::string, 256>& codes);
 
   protected:
+    void buildFromFreq(std::array<unsigned long, 256> freqs);
+
     std::string filename_;
 
   public:
