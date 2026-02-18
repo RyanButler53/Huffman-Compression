@@ -10,7 +10,8 @@ void AsyncGpuEncoder::readThread(std::array<std::string, 256>& codes){
     unsigned char c;
     if (!input.is_open()){
         std::cerr << "Unable to read file" << std::endl;
-        // compressQueue_.push({"", true});
+        std::string s;
+        pushToGpu(s, true);
     }
     // read into 1 MB chunks
     const size_t chunkSize = 1024 * 1024;
@@ -26,8 +27,6 @@ void AsyncGpuEncoder::readThread(std::array<std::string, 256>& codes){
             compressedString.append(codes[c]);
         }
         // Copy the compressed string into a metal buffer
-        // First pass, have constant buffer size to copy DIRECTLY to the buffer
-        
         if (dataread < chunkSize){ // last one
             // Pad the rest of the values with ones. 
             while (compressedString.length() % 8 != 0){
@@ -52,6 +51,7 @@ void AsyncGpuEncoder::pushToGpu(std::string& compressedString, bool last){
     size_t nbytes = compressedString.size();
     MTL::Buffer* d_compString = device_->newBuffer(nbytes, MTL::ResourceStorageModeShared);
     MTL::Buffer* d_compBytes = device_->newBuffer(nbytes / 8, MTL::ResourceStorageModeShared);
+    std::copy(compressedString.begin(), compressedString.end(), (unsigned char*)d_compString->contents());
     
     // Set up kernel call
     MTL::CommandBuffer* commandBuffer = commandQueue_->commandBuffer();
@@ -59,8 +59,9 @@ void AsyncGpuEncoder::pushToGpu(std::string& compressedString, bool last){
     encodeCommand(computeEncoder, d_compString, d_compBytes);
     computeEncoder->endEncoding();
 
-    commandBuffer->addCompletedHandler([this, d_compBytes, last](MTL::CommandBuffer* commandBuffer){
+    commandBuffer->addCompletedHandler([this, d_compBytes, d_compString, last](MTL::CommandBuffer* commandBuffer){
         writeQueue_.push({d_compBytes, d_compBytes->length(), last});
+        d_compString->release();
     });
 
     commandBuffer->commit();
