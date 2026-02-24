@@ -14,6 +14,10 @@
 #include "asyncGpuEncoder.hpp"
 #endif
 
+#ifdef HC_WITH_KOKKOS
+#include "asyncKokkosEncoder.hpp"
+#endif
+
 using namespace std;
 
 Encoder::Encoder(std::string file):
@@ -53,7 +57,11 @@ std::unique_ptr<Encoder> Encoder::make(execution::space space, std::string filen
         return std::make_unique<MetalEncoder>(filename);
     case execution::space::async_gpu:
         return std::make_unique<AsyncGpuEncoder>(filename);
-    #endif   
+    #endif
+    #ifdef HC_WITH_KOKKOS
+    case execution::space::async_kokkos:
+        return std::make_unique<AsyncKokkosEncoder>(filename);
+    #endif
 
     default:
         throw std::invalid_argument("Invalid Encoder");

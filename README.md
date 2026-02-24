@@ -10,10 +10,11 @@ A C++/Metal Implementation of the Huffman Compression algorithm.
 ### Build Options: 
 - `-DHC_DO_TESTS=ON`:  Turns on tests. See the Tests section
 - `-DHC_WITH_GPU=ON`: Tries to build with Metal-cpp bindings. Must provide `-Dmetal_ROOT=/path/to/metal-cpp/directory`. Apple only. Also requires xcode to be downloaded to run the `xcrun -sdk macosx metal` command to compile the kernels
+- `-DHC_WITH_KOKKOS`: Tries to find the Kokkos parallel computing package and build with kokkos.
 
 ### Compress:
 
-`./compress [cpu|gpu|async|async_gpu] <filename1> <filename2> ...`
+`./compress [cpu|gpu|async|async_gpu|async_kokkos] <filename1> <filename2> ...`
 
 ### Uncompress:
 

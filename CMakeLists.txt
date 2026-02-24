@@ -10,14 +10,22 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 option(HC_DO_TESTS "build unit tests" ON)
 option(HC_WITH_GPU "build with metal support" ON)
+option(HC_WITH_KOKKOS "build with kokkos support" ON)
 
-add_subdirectory(src)
 set (metal_ROOT /users/ryan/projects/sw/metal-cpp)
+set (CMAKE_PREFIX_PATH /users/ryan/projects/sw/)
+
 if (HC_WITH_GPU)
     message(STATUS "Enabling GPU support via Metal")
     add_subdirectory(kernels)
     find_package(Metal)
 endif()
+
+if (HC_WITH_KOKKOS)
+    find_package(Kokkos REQUIRED)
+endif()
+
+add_subdirectory(src)
 
 if (HC_DO_TESTS)
     add_subdirectory(tests)

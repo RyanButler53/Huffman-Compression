@@ -3,6 +3,10 @@
     #define MTL_PRIVATE_IMPLEMENTATION
 #endif
 
+#ifdef HC_WITH_KOKKOS
+    #include<Kokkos_Core.hpp>
+#endif
+
 #include <gtest/gtest.h>
 #include <string>
 #include <filesystem>
@@ -111,3 +115,14 @@ INSTANTIATE_TEST_SUITE_P(EquivalenceCPU, EncodeDecodeEquivalence, testing::Value
 #ifdef HC_WITH_GPU
 INSTANTIATE_TEST_SUITE_P(EquivalenceGPU, EncodeDecodeEquivalence, testing::Values(execution::space::gpu, execution::space::async_gpu));
 #endif
+#ifdef HC_WITH_KOKKOS
+INSTANTIATE_TEST_SUITE_P(EquivalenceKokkos, EncodeDecodeEquivalence, testing::Values(execution::space::async_kokkos));
+#endif
+
+int main(){
+    ::testing::InitGoogleTest();
+    #ifdef HC_WITH_KOKKOS
+    Kokkos::ScopeGuard kokkosScope; 
+    #endif
+    return RUN_ALL_TESTS();
+}

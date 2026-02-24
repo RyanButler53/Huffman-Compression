@@ -3,6 +3,10 @@
     #define MTL_PRIVATE_IMPLEMENTATION
 #endif
 
+#ifdef HC_WITH_KOKKOS
+    #include <Kokkos_Core.hpp>
+#endif
+
 #include "encoder.hpp"
 #include <iostream>
 #include <fstream>
@@ -11,7 +15,7 @@
 
 using namespace std;
 
-int main(int argc, const char** argv){
+int main(int argc, char* argv[]){
     if (argc == 1){
         cerr << "No files given" << endl;
         exit(1);
@@ -27,15 +31,22 @@ int main(int argc, const char** argv){
     } else if (firstArg == "gpu") {
         #ifdef HC_WITH_GPU
         space = execution::space::gpu;
-        #endif
         ++arg_i;
-    } else if (firstArg == "async"){
-        space = execution::space::async;
-        ++arg_i;
-    } else if (firstArg == "async_gpu") {
+    } else if (firstArg == "async_gpu"){
         space = execution::space::async_gpu;
         ++arg_i;
+        #endif
+    } else if (firstArg == "async") {
+        space = execution::space::async;
+        ++arg_i;
+    } else if (firstArg == "kokkos"){
+        #ifdef HC_WITH_KOKKOS
+        space = execution::space::async_kokkos;
+        ++arg_i;
+        Kokkos::initialize(argc, argv);
+        #endif
     }
+
     for (; arg_i < argc; ++arg_i){
         auto now = std::chrono::steady_clock::now();
         string filename = argv[arg_i];
@@ -51,5 +62,8 @@ int main(int argc, const char** argv){
         cout << "Compression Ratio: " << compRatio << endl;
     }
 
+    if (space == execution::space::async_kokkos){
+        Kokkos::finalize();
+    }
     return 0;
 }
