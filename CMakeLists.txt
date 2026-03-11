@@ -22,6 +22,7 @@ if (HC_WITH_GPU)
 endif()
 
 if (HC_WITH_KOKKOS)
+    message(STATUS "Enabling Kokkos Support")
     find_package(Kokkos REQUIRED)
 endif()
 
