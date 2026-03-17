@@ -29,7 +29,7 @@ void AsyncKokkosEncoder::readThread(std::array<std::string, 256>& codes){
     std::array<DeviceSubViewType, 2> deviceSubOutViews;
 
     // Allocate buffers
-    for (size_t i : std::views::iota(2)){
+    for (size_t i : std::views::iota(0,2)){
         deviceViews[i] = Kokkos::View<unsigned char*, Kokkos::DefaultExecutionSpace>(std::format("Device View in {}", i), maxBufferSize * chunkSize_);
         deviceOutViews[i] = Kokkos::View<unsigned char*, Kokkos::DefaultExecutionSpace>(std::format("Device Out View in {}", i), maxBufferSize * chunkSize_ / 8);
     }
@@ -42,8 +42,7 @@ void AsyncKokkosEncoder::readThread(std::array<std::string, 256>& codes){
     std::vector<unsigned char> filechunk(chunkSize_);
     std::string extraBytes;
 
-    for (size_t step : std::views::iota(numChunks)){
-
+    for (size_t step : std::views::iota(size_t{0}, numChunks)){
         // Reads 512 KB from file into file and convert to compressed string;
         auto readToCompressedString = [this, &codes, &extraBytes, &input, &filechunk](){
             std::string compressedString = extraBytes;
@@ -61,63 +60,39 @@ void AsyncKokkosEncoder::readThread(std::array<std::string, 256>& codes){
             return compressedString;
         };
 
+        // Each iteration needs to have its own specially allocated host out views. 
+        std::array<HostOutViewType, 2> hostOutViews;
+        for (size_t buffer_i : std::views::iota(0, 2)){
+            std::string compressedString = readToCompressedString();
+            size_t n = compressedString.size();
+            Kokkos::View<char*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> hostView(compressedString.data(), n);
+    
+            // Make Device View 0 that is buf[0] subviewed for the first compressedString.data() elements, resize device view and allocate host view
+            deviceSubViews[buffer_i] = Kokkos::subview(deviceViews[buffer_i], Kokkos::make_pair<size_t, size_t>(0, n));
+            deviceSubOutViews[buffer_i] = Kokkos::subview(deviceOutViews[buffer_i], Kokkos::make_pair<size_t, size_t>(0, n/8));
+    
+            // This must be allocated before any copying or work is launched on to the execution space
+            hostOutViews[buffer_i] = Kokkos::create_mirror_view(deviceSubOutViews[buffer_i]);
 
-        std::string compressedString0= readToCompressedString();
-        size_t n = compressedString0.size();
-        Kokkos::View<char*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> hostView(compressedString0.data(), n);
-
-        // Make Device View 0 that is buf[0] subviewed for the first compressedString.data() elements, resize device view and allocate host view
-        deviceSubViews[0] = Kokkos::subview(deviceViews[0], Kokkos::make_pair<size_t, size_t>(0, n));
-        deviceSubOutViews[0] = Kokkos::subview(deviceOutViews[0], Kokkos::make_pair<size_t, size_t>(0, n/8));
-
-        // This must be allocated before any copying or work is launched on to the execution space
-        typename DeviceSubViewType::host_mirror_type hostOutView0 = Kokkos::create_mirror_view(deviceSubOutViews[0]);
+            // Deep copy from host view to device view, launch kernel, copy back to host
+            Kokkos::deep_copy(streams[buffer_i], deviceSubViews[buffer_i], hostView);
+            Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> rPolicy(streams[buffer_i], 0, n/8);
+            // auto kernel = getKernel(0);
+            Kokkos::parallel_for("Compress Buffer 0", rPolicy, KOKKOS_LAMBDA(const uint32_t i){
+                unsigned char ch = 0;
+                for (size_t b = 0; b < 8; ++b){
+                    ch = (ch << 1) | (deviceSubViews[buffer_i][8*i + b] == 49); // 49 is ascii for "1"
+                }
+                deviceSubOutViews[buffer_i](i) = ch;
+            });
+            Kokkos::deep_copy(streams[buffer_i], hostOutViews[buffer_i], deviceSubOutViews[buffer_i]);
+        }
         
-        // Deep copy from host view to device view, launch kernel, copy back to host
-        Kokkos::deep_copy(streams[0], deviceSubViews[0], hostView);
-        Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> policy0(streams[0], 0, n/8);
-        // auto kernel = getKernel(0);
-        Kokkos::parallel_for("Compress Buffer 0", policy0, KOKKOS_LAMBDA(const uint32_t i){
-            unsigned char ch = 0;
-            for (size_t b = 0; b < 8; ++b){
-                ch = (ch << 1) | (deviceSubViews[0][8*i + b] == 49); // 49 is ascii for "1"
-            }
-            deviceSubOutViews[0](i) = ch;
-        });
-        Kokkos::deep_copy(streams[0],hostOutView0, deviceSubOutViews[0]);
-
-        ///// CHUNK 2 PROCESSING *******************v***********************************************************************************************
-
-        // Start Reading Chunk 2
-        std::string compressedString1 = readToCompressedString();
-        size_t n1 = compressedString1.size();
-        Kokkos::View<char*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> hostView1( compressedString1.data(), n);
-
-        // Make Device View 1 that is buf[1] subviewed for the first compressedString.data() elements, resize device view and allocate host view
-        deviceSubViews[1] = Kokkos::subview(deviceViews[1], Kokkos::make_pair<size_t, size_t>(0, n1));
-        deviceSubOutViews[1] = Kokkos::subview(deviceOutViews[1], Kokkos::make_pair<size_t, size_t>(0, n1/8));
-
-        // This must be allocated before any copying or work is launched on to the execution space
-        typename DeviceSubViewType::host_mirror_type hostOutView1 = Kokkos::create_mirror_view(deviceSubOutViews[1]);
-        
-        // Deep copy from host view to device view, launch kernel, copy back to host
-        Kokkos::deep_copy(streams[1], deviceSubViews[1], hostView);
-        Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace> policy1(streams[1], 0, n1/8);
-
-        Kokkos::parallel_for("Compress Buffer 1", policy0, KOKKOS_LAMBDA(const uint32_t i){
-            unsigned char ch = 0;
-            for (size_t b = 0; b < 8; ++b){
-                ch = (ch << 1) | (deviceSubViews[1][8*i + b] == 49); // 49 is ascii for "1"
-            }
-            deviceSubOutViews[1](i) = ch;
-        });
-        Kokkos::deep_copy(streams[1],hostOutView0, deviceSubOutViews[1]);
-
         // Wait for devices space to be copied back to the host. 
         streams[0].fence();
-        writeQueue_.push({hostOutView0, false});
+        writeQueue_.push({hostOutViews[0], false});
         streams[1].fence();
-        writeQueue_.push({hostOutView1, false});
+        writeQueue_.push({hostOutViews[1], false});
 
     }
 

@@ -63,7 +63,9 @@ int main(int argc, char* argv[]){
     }
 
     if (space == execution::space::async_kokkos){
+        #ifdef HC_WITH_KOKKOS
         Kokkos::finalize();
+        #endif
     }
     return 0;
 }

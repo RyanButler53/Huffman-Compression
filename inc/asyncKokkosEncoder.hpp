@@ -17,9 +17,9 @@ class AsyncKokkosEncoder : public Encoder, AsyncMixin {
     // Wild Typedefs
     using DeviceViewType = Kokkos::View<unsigned char*, Kokkos::DefaultExecutionSpace>;
     using DeviceSubViewType = typename Kokkos::Subview<DeviceViewType, Kokkos::pair<size_t, size_t>>::type;
-    using HostType = DeviceSubViewType::host_mirror_type;
+    using HostOutViewType = DeviceSubViewType::host_mirror_type;
 
-    ThreadsafeQueue<std::pair<HostType, bool>> writeQueue_;
+    ThreadsafeQueue<std::pair<HostOutViewType, bool>> writeQueue_;
 
 
     // Thread Routines

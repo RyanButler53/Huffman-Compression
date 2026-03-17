@@ -3,6 +3,7 @@
 #include <fstream>
 #include <thread>
 #include <array>
+#include <algorithm>
 
 std::array<unsigned long, 256> AsyncMixin::asyncInit(std::string filename){
     std::fstream input{filename, std::ios::in};
