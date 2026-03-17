@@ -12,10 +12,18 @@
 class AsyncKokkosEncoder : public Encoder, AsyncMixin {
 
     void init() override;
-    ThreadsafeQueue<std::pair<std::string, bool>> compressQueue_;
-    ThreadsafeQueue<std::pair<std::vector<unsigned char>, bool>> writeQueue_;
+
+
+    // Wild Typedefs
+    using DeviceViewType = Kokkos::View<unsigned char*, Kokkos::DefaultExecutionSpace>;
+    using DeviceSubViewType = typename Kokkos::Subview<DeviceViewType, Kokkos::pair<size_t, size_t>>::type;
+    using HostType = DeviceSubViewType::host_mirror_type;
+
+    ThreadsafeQueue<std::pair<HostType, bool>> writeQueue_;
+
+
+    // Thread Routines
     void writeThread();
-    void compressThread();
     void readThread(std::array<std::string, 256>& codes);
 
     public:
