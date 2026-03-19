@@ -43,6 +43,7 @@ int main(int argc, char* argv[]){
         #ifdef HC_WITH_KOKKOS
         space = execution::space::async_kokkos;
         ++arg_i;
+        // User must pass in kokkos settings as command line args
         Kokkos::initialize(argc, argv);
         #endif
     }
@@ -55,7 +56,7 @@ int main(int argc, char* argv[]){
         auto done = std::chrono::steady_clock::now();
 
         long ms = std::chrono::duration_cast<std::chrono::milliseconds>((done - now)).count();
-        std::cout << ms / 1000.0 << std::endl;
+        std::cout << "Time: " << ms / 1000.0 << std::endl;
         auto [filelen, compSize, compRatio] = e->getStats();
         cout << "Original File Size: " << filelen << " bytes" << endl;
         cout << "Compressed File Size: " << compSize << " bytes" << endl;
