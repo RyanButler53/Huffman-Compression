@@ -189,6 +189,10 @@ void Encoder::writeCodes(std::array<std::string, 256> &codes){
 }
 
 void Encoder::Encode(){
+    if (!std::filesystem::exists(filename_)){
+        std::cerr << "File does not exist" << std::endl;
+        return;
+    }
     init(); // build tree;
     std::array<std::string, 256> codes = getCodes();
     writeCodes(codes);
